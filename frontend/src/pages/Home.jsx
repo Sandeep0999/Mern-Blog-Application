@@ -1,110 +1,139 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Search, Users, Sparkles } from 'lucide-react';
+import heropic from '../assets/heropic.jpg';
+
+import { Search, Users, Sparkles, PenLine, Globe, Shield } from 'lucide-react';
 
 const Home = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="flex-1 flex items-center justify-center px-4 py-20">
-        <div className="max-w-4xl text-center">
-          <h1 className="text-6xl md:text-7xl font-display font-bold text-gray-900 mb-6 leading-tight">
-            Write with the best
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            More writers and independent creators choose DailyPen than any other
-            writing platform. Tap into intuitive, flexible tools that put writers,
-            bloggers, and creators first.
-          </p>
-          <Link
-            to="/signup"
-            className="inline-block bg-gray-900 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            Start a blog
-          </Link>
-          <p className="text-gray-500 mt-4">
-            Get your free account now—just an email needed.
-          </p>
-        </div>
-      </section>
+      {/* ================= HERO SECTION ================= */}
+<section
+  className="relative flex-1 flex items-center justify-center px-4 py-28 bg-cover bg-center"
+  style={{
+  backgroundImage: `url(${heropic})`,
+}}
 
-      {/* Features Section */}
-      <section className="py-20 px-4 bg-white">
+>
+  {/* Overlay */}
+  <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/55 to-white/70 dark:from-gray-900/40 dark:via-gray-900/60 dark:to-gray-950/80"></div>
+  {/* Content */}
+  <div className="relative z-10 max-w-5xl text-center animate-fade-in-up">
+    <span className="inline-block mb-4 px-4 py-1 text-sm font-medium rounded-full bg-gray-900 text-white shadow-md">
+      ✍️ A modern blogging platform
+    </span>
+
+    <h1 className="text-6xl md:text-7xl font-display font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+      Write smarter. <br className="hidden md:block" />
+      Publish faster.
+    </h1>
+
+    <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
+      DailyPen helps writers, developers, and creators publish meaningful
+      content with powerful tools, beautiful design, and AI assistance.
+    </p>
+
+    <div className="flex flex-col sm:flex-row justify-center gap-4">
+      <Link
+        to="/signup"
+        className="bg-gray-900 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+      >
+        Start writing for free
+      </Link>
+
+      <Link
+        to="/login"
+        className="px-8 py-4 rounded-lg text-lg font-medium border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 text-gray-800 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-all duration-300 backdrop-blur"
+      >
+        Sign in
+      </Link>
+    </div>
+
+    <p className="text-gray-600 dark:text-gray-400 mt-6">
+      No credit card required · Free forever plan
+    </p>
+  </div>
+</section>
+
+
+      {/* ================= FEATURE GRID ================= */}
+      <section className="py-24 px-4 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {/* Feature 1 */}
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white mb-6">
-                <Search className="h-8 w-8" />
-              </div>
-              <h3 className="text-2xl font-display font-semibold mb-4">
-                SEO, to go
-              </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Get found faster thanks to built-in search engine optimization
-                tools. Clean URLs, automatic sitemaps, and custom titles and
-                descriptions help put your blog at the top of the stack in search
-                results.
-              </p>
-            </div>
+          <h2 className="text-4xl font-display font-bold text-center text-gray-900 dark:text-white mb-16">
+            Everything you need to grow your blog
+          </h2>
 
-            {/* Feature 2 */}
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white mb-6">
-                <Users className="h-8 w-8" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {[
+              {
+                icon: <Search />,
+                title: 'SEO Ready',
+                desc: 'Optimized URLs, metadata, and clean structure help your content rank better.',
+              },
+              {
+                icon: <Users />,
+                title: 'Built-in Audience',
+                desc: 'Reach readers easily with sharing, discovery, and community features.',
+              },
+              {
+                icon: <Sparkles />,
+                title: 'AI-Assisted Writing',
+                desc: 'Generate, refine, and expand blog content directly inside the editor.',
+              },
+              {
+                icon: <PenLine />,
+                title: 'Rich Editor',
+                desc: 'Write beautifully with a distraction-free editor built for long-form content.',
+              },
+              {
+                icon: <Globe />,
+                title: 'Fast & Global',
+                desc: 'Optimized performance ensures your blogs load fast everywhere.',
+              },
+              {
+                icon: <Shield />,
+                title: 'Secure by Default',
+                desc: 'Authentication, protected routes, and secure APIs built-in.',
+              },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="group bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 text-center border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+              >
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gray-900 text-white mb-6 group-hover:scale-110 transition-transform">
+                  {item.icon}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  {item.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                  {item.desc}
+                </p>
               </div>
-              <h3 className="text-2xl font-display font-semibold mb-4">
-                Find your audience
-              </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Say hello to a huge community of bloggers, creators, and avid
-                readers, every time you publish. DailyPen's built-in Reader means
-                millions of people can easily find, follow, and share your blog.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white mb-6">
-                <Sparkles className="h-8 w-8" />
-              </div>
-              <h3 className="text-2xl font-display font-semibold mb-4">
-                Blog beautifully
-              </h3>
-              <p className="text-gray-600 leading-relaxed">
-                Customize your blog's look and feel with beautifully designed
-                themes. Bring your writing to life with a rich text editor. Put
-                your fingerprint on every font, color, and element on the page.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-gray-50">
+      {/* ================= CTA ================= */}
+      <section className="py-24 px-4 bg-gray-50 dark:bg-gray-950">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-5xl font-display font-bold text-gray-900 mb-6">
-            Simple, meet flexible.
+          <h2 className="text-5xl font-display font-bold text-gray-900 dark:text-white mb-6">
+            Start your writing journey today
           </h2>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-            Whatever you're publishing. Whoever your audience is. DailyPen makes it
-            simple to get started. And easy to expand your site as your audience
-            grows.
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 leading-relaxed">
+            Whether you're a beginner or a seasoned writer, DailyPen gives you
+            the tools to publish confidently and grow consistently.
           </p>
           <Link
             to="/signup"
-            className="inline-block bg-gray-900 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="inline-block bg-gray-900 text-white px-10 py-4 rounded-lg text-lg font-medium hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
           >
-            Start a blog
+            Create your free account
           </Link>
-          <p className="text-gray-500 mt-4">
-            No coding or design experience required—get your free account in
-            minutes.
-          </p>
         </div>
       </section>
 

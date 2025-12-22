@@ -9,6 +9,7 @@ import { Upload, X } from 'lucide-react';
 
 const CreatePost = () => {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
@@ -18,6 +19,34 @@ const CreatePost = () => {
   });
   const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const generateWithAI = async () => {
+  if (!formData.title) {
+    toast.error('Please enter a title first');
+    return;
+  }
+
+  setAiLoading(true);
+
+  try {
+    const { data } = await API.post('/ai/generate', {
+      title: formData.title,
+      subtitle: formData.subtitle,
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      content: data.content,
+    }));
+
+    toast.success('AI content generated!');
+  } catch (error) {
+    toast.error('Failed to generate content');
+  } finally {
+    setAiLoading(false);
+  }
+};
 
   const handleChange = (e) => {
     setFormData({
@@ -93,12 +122,12 @@ const CreatePost = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
       <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
             Create a New Post
           </h1>
 
@@ -107,7 +136,7 @@ const CreatePost = () => {
             <div>
               <label
                 htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Title *
               </label>
@@ -143,10 +172,10 @@ const CreatePost = () => {
                 required
                 maxLength={300}
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 dark:bg-gray-800 dark:text-white"
                 placeholder="Write a brief description..."
               />
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {formData.subtitle.length}/300 characters
               </p>
             </div>
@@ -201,6 +230,17 @@ const CreatePost = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Content *
               </label>
+              <div className="flex justify-end mb-2">
+                <button
+                  type="button"
+                  onClick={generateWithAI}
+                  disabled={aiLoading}
+                  className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                >
+                {aiLoading ? 'Generating...' : '✨ Generate with AI'}
+                </button>
+              </div>
+
               <RichEditor
                 value={formData.content}
                 onChange={handleContentChange}
@@ -234,7 +274,7 @@ const CreatePost = () => {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Cancel
               </button>

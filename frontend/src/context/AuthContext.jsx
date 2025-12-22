@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load user from localStorage on app start
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -23,25 +24,26 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    const { data } = await API.post('/auth/login', { email, password });
-    localStorage.setItem('user', JSON.stringify(data));
-    setUser(data);
-    return data;
-  };
-
+  // ✅ Register (normal flow)
   const register = async (name, email, password) => {
-    const { data } = await API.post('/auth/register', { name, email, password });
+    const { data } = await API.post('/auth/register', {
+      name,
+      email,
+      password,
+    });
+
     localStorage.setItem('user', JSON.stringify(data));
     setUser(data);
     return data;
   };
 
+  // ✅ Logout
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
   };
 
+  // ✅ Update user profile
   const updateUser = (userData) => {
     const updatedUser = { ...user, ...userData };
     localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -51,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
-    login,
+    setUser,   
     register,
     logout,
     updateUser,

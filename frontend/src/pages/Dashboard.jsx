@@ -143,16 +143,16 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
       <Navbar showSearch onSearch={handleSearch} />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!searchQuery && (
           <div className="text-center mb-12 py-8">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
               Your own blogging platform.
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               This is your space to think out loud, to share what matters, and to write without filters. 
               Whether it's one word or a thousand, your story starts right here.
             </p>
@@ -161,10 +161,10 @@ const Dashboard = () => {
 
         {searchQuery && (
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               Search results for "{searchQuery}"
             </h2>
-            <p className="text-gray-600">{posts.length} posts found</p>
+            <p className="text-gray-600 dark:text-gray-400">{posts.length} posts found</p>
           </div>
         )}
 
@@ -180,8 +180,8 @@ const Dashboard = () => {
                     onClick={() => handleFilterChange(filter.id)}
                     className={`flex items-center space-x-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-200 ${
                       activeFilter === filter.id
-                        ? 'bg-gray-900 text-white shadow-md'
-                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                      ? 'bg-gray-900 text-white shadow-md'
+                      : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -195,10 +195,10 @@ const Dashboard = () => {
 
         {posts.length === 0 ? (
           <div className="text-center py-20">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
               No posts found
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               {searchQuery
                 ? 'Try searching with different keywords'
                 : 'Be the first to create a post!'}
@@ -247,7 +247,7 @@ const Dashboard = () => {
         )}
 
         {/* Newsletter Subscription Section */}
-        <div className="mt-16 bg-gray-900 text-white rounded-2xl p-8 md:p-12">
+        <div className="w-full sm:flex-1 px-5 py-3 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Never Miss a Blog!

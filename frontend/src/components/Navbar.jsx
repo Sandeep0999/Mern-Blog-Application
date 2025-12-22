@@ -1,9 +1,19 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Search, PenSquare, User, LogOut, Shield } from 'lucide-react';
+import {
+  Search,
+  PenSquare,
+  User,
+  LogOut,
+  Shield,
+  Moon,
+  Sun,
+} from 'lucide-react';
 import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 const Navbar = ({ onSearch, showSearch = false }) => {
+  const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,13 +32,13 @@ const Navbar = ({ onSearch, showSearch = false }) => {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link
             to={user ? '/dashboard' : '/'}
-            className="text-3xl font-display font-bold text-gray-900 hover:text-gray-700 transition-colors"
+            className="text-3xl font-display font-bold text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
           >
             DailyPen
           </Link>
@@ -42,7 +52,7 @@ const Navbar = ({ onSearch, showSearch = false }) => {
                   placeholder="Search posts..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 dark:bg-gray-800 dark:text-white"
                 />
                 <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
@@ -51,6 +61,19 @@ const Navbar = ({ onSearch, showSearch = false }) => {
 
           {/* Right Menu */}
           <div className="flex items-center space-x-4">
+            {/* 🌙☀️ THEME TOGGLE — STEP 4 (3) */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5 text-yellow-400" />
+              ) : (
+                <Moon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              )}
+            </button>
+
             {user ? (
               <>
                 <Link
@@ -64,7 +87,7 @@ const Navbar = ({ onSearch, showSearch = false }) => {
                 <div className="relative">
                   <button
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors"
+                    className="flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-lg transition-colors"
                   >
                     {user.avatar ? (
                       <img
@@ -77,16 +100,16 @@ const Navbar = ({ onSearch, showSearch = false }) => {
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="hidden sm:inline font-medium">
+                    <span className="hidden sm:inline font-medium dark:text-white">
                       {user.name}
                     </span>
                   </button>
 
                   {showDropdown && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-gray-200">
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-lg shadow-lg py-1 border border-gray-200 dark:border-gray-700">
                       <Link
                         to={`/profile/${user._id}`}
-                        className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                         onClick={() => setShowDropdown(false)}
                       >
                         <User className="h-4 w-4" />
@@ -96,7 +119,7 @@ const Navbar = ({ onSearch, showSearch = false }) => {
                       {user.role === 'admin' && (
                         <Link
                           to="/admin"
-                          className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 transition-colors"
+                          className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                           onClick={() => setShowDropdown(false)}
                         >
                           <Shield className="h-4 w-4" />
@@ -109,7 +132,7 @@ const Navbar = ({ onSearch, showSearch = false }) => {
                           setShowDropdown(false);
                           handleLogout();
                         }}
-                        className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 transition-colors w-full text-left text-red-600"
+                        className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full text-left text-red-600"
                       >
                         <LogOut className="h-4 w-4" />
                         <span>Logout</span>
@@ -122,7 +145,7 @@ const Navbar = ({ onSearch, showSearch = false }) => {
               <>
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                  className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
                 >
                   Log in
                 </Link>

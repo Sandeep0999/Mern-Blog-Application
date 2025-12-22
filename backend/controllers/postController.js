@@ -4,16 +4,13 @@ import User from '../models/User.js';
 import cloudinary from '../config/cloudinary.js';
 import { validationResult } from 'express-validator';
 
-// @desc    Get all posts with filtering
-// @route   GET /api/posts
-// @access  Public
 export const getPosts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const sortBy = req.query.sortBy || 'recent'; // recent, liked, oldest, commented
-
+    const sortBy = req.query.sortBy || 'recent';
+    
     // Determine sort order based on filter
     let sortOption = {};
     switch (sortBy) {

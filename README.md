@@ -12,6 +12,7 @@ A full-featured blogging platform built with the MERN stack (MongoDB, Express, R
 -  Like and save posts
 -  Search functionality , filtering and pagination
 -  User profiles
+-  Ai Integrated
 -  Admin dashboard
 -  Responsive design
 -  Beautiful UI with Tailwind CSS

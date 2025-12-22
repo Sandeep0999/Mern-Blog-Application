@@ -25,6 +25,13 @@ const userSchema = new mongoose.Schema(
       minlength: [6, 'Password must be at least 6 characters'],
       select: false,
     },
+    otpHash: {
+      type: String,
+      select: false,
+    },
+    otpExpiresAt: {
+      type: Date,
+    },
     role: {
       type: String,
       enum: ['user', 'admin'],
@@ -54,7 +61,7 @@ const userSchema = new mongoose.Schema(
 // Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);

@@ -10,11 +10,20 @@ import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import PublicRoute from './components/PublicRoute';
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <Home />
+          </PublicRoute>
+        }
+      />
+
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       
