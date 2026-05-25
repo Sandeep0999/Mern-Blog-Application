@@ -15,6 +15,9 @@ import {
   Loader2,
   X,
   AlertTriangle,
+  ArrowLeft,
+  Calendar,
+  Sparkles
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -28,10 +31,22 @@ const PostDetail = () => {
   const [loading, setLoading] = useState(true);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  
+  // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteType, setDeleteType] = useState(null); // 'post' or 'comment'
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Synced local follow state
+  const [followedWriters, setFollowedWriters] = useState(() => {
+    try {
+      const saved = localStorage.getItem('followed_writers');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
   useEffect(() => {
     fetchPost();
@@ -40,6 +55,10 @@ const PostDetail = () => {
       checkIfSaved();
     }
   }, [id]);
+
+  useEffect(() => {
+    localStorage.setItem('followed_writers', JSON.stringify(followedWriters));
+  }, [followedWriters]);
 
   const fetchPost = async () => {
     try {
@@ -98,9 +117,19 @@ const PostDetail = () => {
     try {
       await API.put(`/users/save/${id}`);
       setIsSaved(!isSaved);
-      toast.success(isSaved ? 'Post unsaved' : 'Post saved');
+      toast.success(isSaved ? 'Post removed from Bookmarks' : 'Post saved to Bookmarks');
     } catch (error) {
       toast.error('Failed to save post');
+    }
+  };
+
+  const handleFollowToggle = (authorId) => {
+    if (followedWriters.includes(authorId)) {
+      setFollowedWriters(prev => prev.filter(id => id !== authorId));
+      toast.success('Unfollowed author');
+    } else {
+      setFollowedWriters(prev => [...prev, authorId]);
+      toast.success('Author followed');
     }
   };
 
@@ -131,7 +160,7 @@ const PostDetail = () => {
           ...post,
           commentsCount: post.commentsCount - 1,
         });
-        toast.success('Comment deleted');
+        toast.success('Comment removed');
         closeDeleteModal();
       }
     } catch (error) {
@@ -174,160 +203,218 @@ const PostDetail = () => {
   };
 
   const formatDate = (date) => {
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
+    try {
+      return formatDistanceToNow(new Date(date), { addSuffix: true });
+    } catch (e) {
+      return '';
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-gray-900" />
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-gray-900 dark:text-white" />
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Opening reading canvas...</p>
+          </div>
         </div>
         <Footer />
       </div>
     );
   }
 
+  const isLiked = post.likes?.includes(user?._id);
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300 select-none">
       <Navbar />
 
-      <main className="flex-1">
-        {/* Featured Image */}
-        <div className="w-full h-96 bg-gray-900">
-          <img
-            src={post.image}
-            alt={post.title}
-            className="w-full h-full object-cover opacity-90"
-          />
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 md:py-10 animate-fadeIn">
+        
+        {/* Navigation Breadcrumb */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="inline-flex items-center space-x-1 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to Stories</span>
+          </button>
         </div>
 
-        <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-10">
-          {/* Post Header */}
-          <div className="bg-white rounded-lg shadow-xl p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <Link
-                to={`/profile/${post.author._id}`}
-                className="flex items-center space-x-3"
-              >
+        <article className="space-y-6">
+          
+          {/* ================= TITLE & SUBTITLE ================= */}
+          <div className="space-y-3">
+            {post.tags && post.tags.length > 0 && (
+              <span className="inline-block px-2.5 py-0.5 bg-gray-50 dark:bg-gray-900/60 text-gray-650 dark:text-gray-400 border border-gray-100 dark:border-gray-800 text-[11px] font-bold rounded-full uppercase tracking-wider">
+                {post.tags[0]}
+              </span>
+            )}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-sans font-black tracking-tight text-gray-900 dark:text-white leading-tight">
+              {post.title}
+            </h1>
+            <p className="text-lg sm:text-xl font-sans font-light text-gray-550 dark:text-gray-400 leading-relaxed font-sans">
+              {post.subtitle}
+            </p>
+          </div>
+
+          {/* ================= AUTHOR HEADER & ACTION BAR ================= */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-y border-gray-100 dark:border-gray-800/80 gap-4">
+            
+            {/* Author Profile */}
+            <div className="flex items-center space-x-3">
+              <Link to={`/profile/${post.author._id}`} className="flex-shrink-0 group">
                 {post.author.avatar ? (
                   <img
                     src={post.author.avatar}
                     alt={post.author.name}
-                    className="h-12 w-12 rounded-full object-cover"
+                    className="h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-800 group-hover:scale-102 transition-transform"
                   />
                 ) : (
-                  <div className="h-12 w-12 rounded-full bg-gray-900 flex items-center justify-center text-white font-semibold text-lg">
+                  <div className="h-10 w-10 rounded-full bg-gray-900 dark:bg-gray-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-102 transition-transform">
                     {post.author.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    {post.author.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {formatDate(post.createdAt)}
-                  </p>
-                </div>
               </Link>
+              
+              <div>
+                <div className="flex items-center">
+                  <Link
+                    to={`/profile/${post.author._id}`}
+                    className="text-sm font-bold text-gray-900 dark:text-white hover:underline leading-none"
+                  >
+                    {post.author.name}
+                  </Link>
 
-              {user && user._id === post.author._id && (
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => navigate(`/edit-post/${id}`)}
-                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Edit className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => openDeleteModal('post')}
-                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
+                  {/* Follow/Following Button */}
+                  {user && user._id !== post.author._id && (
+                    <button
+                      onClick={() => handleFollowToggle(post.author._id)}
+                      className={`ml-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition border ${
+                        followedWriters.includes(post.author._id)
+                          ? 'text-gray-400 border-gray-200 dark:border-gray-800 hover:text-red-500 hover:border-red-200 hover:bg-red-50/5'
+                          : 'text-emerald-600 hover:text-emerald-700 border-emerald-100 dark:border-emerald-900/60 bg-emerald-500/5 hover:bg-emerald-500/10'
+                      }`}
+                    >
+                      {followedWriters.includes(post.author._id) ? 'Following' : 'Follow'}
+                    </button>
+                  )}
                 </div>
-              )}
+                
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 font-medium flex items-center space-x-1">
+                  <Calendar className="h-3 w-3" />
+                  <span>Published {formatDate(post.createdAt)}</span>
+                </p>
+              </div>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 mb-4 leading-tight">
-              {post.title}
-            </h1>
-
-            <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-              {post.subtitle}
-            </p>
-
-            {/* Tags */}
-            {post.tags && post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {post.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-              <div className="flex items-center space-x-6">
+            {/* Engagement Controls & Author Actions */}
+            <div className="flex items-center justify-between sm:justify-end space-x-6 border-t sm:border-t-0 border-gray-50 dark:border-gray-900 pt-3 sm:pt-0">
+              
+              {/* Engagement metrics */}
+              <div className="flex items-center space-x-5">
                 <button
                   onClick={handleLike}
-                  className={`flex items-center space-x-2 ${
-                    post.likes?.includes(user?._id)
-                      ? 'text-red-500'
-                      : 'text-gray-600'
-                  } hover:text-red-500 transition-colors`}
+                  className={`flex items-center space-x-1.5 text-xs font-semibold transition-colors duration-200 ${
+                    isLiked
+                      ? 'text-red-500 hover:text-red-600'
+                      : 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400'
+                  }`}
+                  aria-label={isLiked ? "Unlike post" : "Like post"}
                 >
-                  <Heart
-                    className={`h-6 w-6 ${
-                      post.likes?.includes(user?._id) ? 'fill-current' : ''
-                    }`}
-                  />
-                  <span className="font-medium">{post.likesCount || 0}</span>
+                  <Heart className={`h-5 w-5 hover:scale-110 transition-transform ${isLiked ? 'fill-current' : ''}`} />
+                  <span>{post.likesCount || 0}</span>
                 </button>
 
                 <a
                   href="#comments"
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  className="flex items-center space-x-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 >
-                  <MessageCircle className="h-6 w-6" />
-                  <span className="font-medium">{post.commentsCount || 0}</span>
+                  <MessageCircle className="h-5 w-5 hover:scale-110 transition-transform" />
+                  <span>{post.commentsCount || 0}</span>
                 </a>
+
+                <button
+                  onClick={handleSave}
+                  className={`text-xs font-semibold transition-colors duration-200 ${
+                    isSaved
+                      ? 'text-yellow-600 dark:text-yellow-500'
+                      : 'text-gray-400 dark:text-gray-500 hover:text-yellow-650'
+                  }`}
+                  aria-label={isSaved ? "Unsave post" : "Save post"}
+                >
+                  <Bookmark className={`h-5 w-5 hover:scale-110 transition-transform ${isSaved ? 'fill-current' : ''}`} />
+                </button>
               </div>
 
-              <button
-                onClick={handleSave}
-                className={`${
-                  isSaved ? 'text-blue-500' : 'text-gray-600'
-                } hover:text-blue-500 transition-colors`}
-              >
-                <Bookmark
-                  className={`h-6 w-6 ${isSaved ? 'fill-current' : ''}`}
-                />
-              </button>
+              {/* Author triggers (Edit/Delete) */}
+              {user && user._id === post.author._id && (
+                <div className="flex items-center space-x-2 border-l border-gray-100 dark:border-gray-800 pl-4 py-1">
+                  <button
+                    onClick={() => navigate(`/edit-post/${id}`)}
+                    className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-850 transition"
+                    aria-label="Edit post"
+                  >
+                    <Edit className="h-4.5 w-4.5" />
+                  </button>
+                  <button
+                    onClick={() => openDeleteModal('post')}
+                    className="p-1.5 text-red-500 hover:text-red-600 rounded-lg hover:bg-red-500/5 dark:hover:bg-red-500/10 transition"
+                    aria-label="Delete post"
+                  >
+                    <Trash2 className="h-4.5 w-4.5" />
+                  </button>
+                </div>
+              )}
+
             </div>
           </div>
 
-          {/* Post Content */}
-          <div className="bg-white rounded-lg shadow-xl p-8 mb-8">
+          {/* ================= INSET ROUNDED FEATURED COVER IMAGE ================= */}
+          {post.image && (
+            <div className="w-full h-80 sm:h-96 md:h-[450px] overflow-hidden rounded-2xl border border-gray-100 dark:border-gray-850 shadow-md">
+              <img
+                src={post.image}
+                alt={post.title}
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+            </div>
+          )}
+
+          {/* ================= HIGH-READABILITY PROSE BODY CONTENT ================= */}
+          <div className="max-w-2xl mx-auto py-4 select-text">
             <div
               className="post-content"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
           </div>
 
-          {/* Comments Section */}
-          <div id="comments" className="bg-white rounded-lg shadow-xl p-8 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Comments ({post.commentsCount || 0})
+          {/* ================= TAGS FOOTER LIST ================= */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="max-w-2xl mx-auto flex flex-wrap gap-2 pt-4 pb-6">
+              {post.tags.map((tag, index) => (
+                <Link
+                  key={index}
+                  to={`/dashboard`}
+                  className="px-3 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-150 dark:border-gray-800 text-xs font-semibold text-gray-600 dark:text-gray-450 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* ================= CURATED COMMENTS SECTION ================= */}
+          <div id="comments" className="max-w-2xl mx-auto border border-gray-100 dark:border-gray-800/80 bg-gray-50/20 dark:bg-gray-900/15 rounded-2xl p-6 sm:p-8">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+              Responses ({post.commentsCount || 0})
             </h2>
 
-            {/* Comment Form */}
+            {/* Comment Addition Input Form */}
             {user ? (
               <form onSubmit={handleCommentSubmit} className="mb-8">
                 <div className="flex items-start space-x-3">
@@ -335,93 +422,107 @@ const PostDetail = () => {
                     <img
                       src={user.avatar}
                       alt={user.name}
-                      className="h-10 w-10 rounded-full object-cover"
+                      className="h-9 w-9 rounded-full object-cover border border-gray-250/70 dark:border-gray-800 flex-shrink-0"
                     />
                   ) : (
-                    <div className="h-10 w-10 rounded-full bg-gray-900 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                    <div className="h-9 w-9 rounded-full bg-gray-900 dark:bg-gray-800 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div className="flex-1">
+                  
+                  <div className="flex-1 min-w-0">
                     <textarea
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Write a comment..."
+                      placeholder="What are your thoughts?"
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"
+                      className="w-full px-4 py-3 text-sm bg-white dark:bg-gray-850/40 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-gray-350 dark:focus:ring-gray-700 resize-none transition"
                     />
-                    <button
-                      type="submit"
-                      disabled={submittingComment || !commentText.trim()}
-                      className="mt-3 flex items-center space-x-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Send className="h-4 w-4" />
-                      <span>
-                        {submittingComment ? 'Posting...' : 'Post Comment'}
-                      </span>
-                    </button>
+                    <div className="flex justify-end mt-2">
+                      <button
+                        type="submit"
+                        disabled={submittingComment || !commentText.trim()}
+                        className="flex items-center space-x-1.5 bg-gray-900 dark:bg-gray-100 hover:bg-gray-850 dark:hover:bg-white text-white dark:text-gray-950 px-4 py-2 rounded-full font-bold text-xs shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {submittingComment ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <span>Posting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-3.5 w-3.5" />
+                            <span>Respond</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </form>
             ) : (
-              <div className="bg-gray-50 rounded-lg p-6 mb-8 text-center">
-                <p className="text-gray-600 mb-4">
-                  Please login to comment on this post
+              <div className="bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800/80 rounded-xl p-5 mb-8 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  Please log in to add a response to this story.
                 </p>
                 <Link
                   to="/login"
-                  className="inline-block bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                  className="inline-block bg-gray-900 dark:bg-gray-100 hover:bg-gray-850 dark:hover:bg-white text-white dark:text-gray-950 px-5 py-2 rounded-full font-bold text-xs transition"
                 >
-                  Login
+                  Log in
                 </Link>
               </div>
             )}
 
-            {/* Comments List */}
-            <div className="space-y-6">
+            {/* List of responses */}
+            <div className="space-y-5 pt-2">
               {comments.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
-                  No comments yet. Be the first to comment!
+                <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-6 font-medium">
+                  Be the first to share your thoughts on this article!
                 </p>
               ) : (
                 comments.map((comment) => (
-                  <div key={comment._id} className="flex items-start space-x-3">
-                    <Link to={`/profile/${comment.author._id}`}>
+                  <div key={comment._id} className="flex items-start space-x-3 animate-fadeIn">
+                    <Link to={`/profile/${comment.author._id}`} className="flex-shrink-0 group">
                       {comment.author.avatar ? (
                         <img
                           src={comment.author.avatar}
                           alt={comment.author.name}
-                          className="h-10 w-10 rounded-full object-cover"
+                          className="h-8.5 w-8.5 rounded-full object-cover border border-gray-200 dark:border-gray-800 group-hover:scale-102 transition"
                         />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-gray-900 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                        <div className="h-8.5 w-8.5 rounded-full bg-gray-900 dark:bg-gray-800 flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0 group-hover:scale-102 transition">
                           {comment.author.name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </Link>
-                    <div className="flex-1">
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-850/80 rounded-2xl p-4 shadow-sm">
+                        <div className="flex items-center justify-between mb-1">
                           <Link
                             to={`/profile/${comment.author._id}`}
-                            className="font-semibold text-gray-900 hover:underline"
+                            className="text-xs font-bold text-gray-800 dark:text-gray-250 hover:underline truncate"
                           >
                             {comment.author.name}
                           </Link>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-[10px] text-gray-450 dark:text-gray-500 font-medium">
                             {formatDate(comment.createdAt)}
                           </span>
                         </div>
-                        <p className="text-gray-700">{comment.content}</p>
+                        <p className="text-xs sm:text-sm text-gray-650 dark:text-gray-300 leading-relaxed font-sans mt-1">
+                          {comment.content}
+                        </p>
                       </div>
+                      
                       {user &&
                         (user._id === comment.author._id ||
                           user.role === 'admin') && (
                           <button
                             onClick={() => openDeleteModal('comment', comment._id)}
-                            className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium"
+                            className="mt-1.5 ml-2 text-[10px] font-bold text-red-500 hover:text-red-650 transition"
                           >
-                            Delete
+                            Delete Response
                           </button>
                         )}
                     </div>
@@ -430,48 +531,59 @@ const PostDetail = () => {
               )}
             </div>
           </div>
+
         </article>
       </main>
 
-      {/* Delete Confirmation Modal */}
+      {/* ================= CONTRAST-SAFE MODALS ================= */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 px-4 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 shadow-2xl rounded-2xl max-w-md w-full p-6 relative">
+            <button
+              onClick={closeDeleteModal}
+              className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition"
+              aria-label="Close modal"
+            >
+              <X className="h-4.5 w-4.5" />
+            </button>
+
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-950/40 flex items-center justify-center">
+                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                 </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Delete {deleteType === 'post' ? 'Post' : 'Comment'}
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2.5">
+                  Delete {deleteType === 'post' ? 'Post' : 'Response'}
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
                   {deleteType === 'post'
-                    ? 'Are you sure you want to delete this post? This action cannot be undone and all comments will be permanently removed.'
-                    : 'Are you sure you want to delete this comment? This action cannot be undone.'}
+                    ? 'Are you sure you want to delete this story? This action is permanent, and all associated responses will be deleted immediately.'
+                    : 'Are you sure you want to remove this response? This action is permanent and cannot be undone.'}
                 </p>
-                <div className="flex space-x-3">
+                
+                <div className="flex space-x-3.5">
                   <button
                     onClick={closeDeleteModal}
                     disabled={deleting}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-750 rounded-full text-xs font-bold text-gray-650 dark:text-gray-350 hover:bg-gray-50 dark:hover:bg-gray-850 transition disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={confirmDelete}
                     disabled={deleting}
-                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-xs font-bold transition disabled:opacity-50 flex items-center justify-center space-x-2 shadow-sm"
                   >
                     {deleting ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Deleting...</span>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Removing...</span>
                       </>
                     ) : (
-                      <span>Delete</span>
+                      <span>Confirm Delete</span>
                     )}
                   </button>
                 </div>

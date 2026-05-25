@@ -18,8 +18,13 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only force-logout if there's actually an active session.
+      // This prevents redirecting guest users when public requests fail.
+      const hasSession = !!localStorage.getItem('user');
+      if (hasSession) {
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
