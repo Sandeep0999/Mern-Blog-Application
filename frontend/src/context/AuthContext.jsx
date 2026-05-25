@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import API from '../api/axios';
+import API, { resetLogoutState } from '../api/axios';
 
 const AuthContext = createContext();
 
@@ -11,39 +11,58 @@ export const useAuth = () => {
   return context;
 };
 
+/* ─────────────────────────────────────────────────────────────
+   AUTH PROVIDER
+   ───────────────────────────────────────────────────────────── */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on app start
+  // ── Restore session from localStorage on app start ──
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const stored = JSON.parse(raw);
+        // Basic sanity check — must have a token string
+        if (stored && typeof stored.token === 'string' && stored.token.length > 10) {
+          setUser(stored);
+        } else {
+          // Corrupted or empty token — clear it silently
+          localStorage.removeItem('user');
+        }
+      }
+    } catch {
+      // Corrupted JSON in localStorage — clear it
+      localStorage.removeItem('user');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  // ✅ Register (normal flow)
-  const register = async (name, email, password) => {
-    const { data } = await API.post('/auth/register', {
-      name,
-      email,
-      password,
-    });
+  /* ── Login (email + password → OTP flow; stores result of verify-otp) ── */
+  const login = (userData) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    resetLogoutState(); // reset any previous logout lock
+    setUser(userData);
+  };
 
+  /* ── Register ── */
+  const register = async (name, email, password) => {
+    const { data } = await API.post('/auth/register', { name, email, password });
     localStorage.setItem('user', JSON.stringify(data));
+    resetLogoutState();
     setUser(data);
     return data;
   };
 
-  // ✅ Logout
+  /* ── Logout ── */
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
   };
 
-  // ✅ Update user profile
+  /* ── Update profile (keeps token intact) ── */
   const updateUser = (userData) => {
     const updatedUser = { ...user, ...userData };
     localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -53,7 +72,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
-    setUser,   
+    setUser,
+    login,
     register,
     logout,
     updateUser,

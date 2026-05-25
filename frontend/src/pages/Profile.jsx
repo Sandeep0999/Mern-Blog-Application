@@ -4,11 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PostCard from '../components/PostCard';
-import API from '../api/axios';
+import API, { isSilentError, logDebug } from '../api/axios';
 import { toast } from 'react-toastify';
 import { 
   Edit, Save, X, Loader2, FileText, Bookmark, 
-  Camera, Calendar, Mail, Award
+  Camera, Calendar, Mail, Award, AlertTriangle
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -29,13 +29,23 @@ const Profile = () => {
   const isOwnProfile = user && user._id === id;
 
   useEffect(() => {
-    fetchProfile();
-    if (isOwnProfile) fetchSavedPosts();
-  }, [id]);
+    logDebug('Profile', `Mounting Profile page for id: ${id}`);
+    const controller = new AbortController();
+    fetchProfile(controller.signal);
+    if (isOwnProfile) fetchSavedPosts(controller.signal);
+    return () => {
+      logDebug('Profile', `Unmounting/Aborting Profile page for id: ${id}`);
+      controller.abort();
+    };
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (signal) => {
     try {
-      const { data } = await API.get(`/users/profile/${id}`);
+      logDebug('Profile', `[START] Fetching profile from server for id: ${id}`);
+      
+      const { data } = await API.get(`/users/profile/${id}`, { signal });
+      
+      logDebug('Profile', `[SUCCESS] Profile loaded for: ${data.user?.name}`, data.user);
       setProfile(data.user);
       setPosts(data.posts);
       setFormData({
@@ -45,19 +55,25 @@ const Profile = () => {
       });
       setAvatarPreview(data.user.avatar || '');
     } catch (error) {
-      toast.error('Failed to fetch profile');
+      logDebug('Profile', `[ERROR] Failed to load profile:`, error);
+      if (isSilentError(error)) {
+        logDebug('Profile', 'Silenced profile error based on global interceptor rules.');
+        return;
+      }
+      toast.error('Failed to fetch profile', { toastId: 'profile-error' });
       navigate('/dashboard');
     } finally {
+      logDebug('Profile', '[COMPLETE] Fetch profile request complete.');
       setLoading(false);
     }
   };
 
-  const fetchSavedPosts = async () => {
+  const fetchSavedPosts = async (signal) => {
     try {
-      const { data } = await API.get('/users/saved');
+      const { data } = await API.get('/users/saved', { signal });
       setSavedPosts(data);
     } catch (error) {
-      console.error('Failed to fetch saved posts');
+      if (!isSilentError(error)) console.error('Failed to fetch saved posts:', error.message);
     }
   };
 
@@ -112,6 +128,25 @@ const Profile = () => {
     }
   };
 
+  const handleFollowToggle = async (authorId) => {
+    try {
+      const { data } = await API.put(`/users/profile/follow/${authorId}`);
+      updateUser({ following: data.currentUserFollowing });
+      
+      // Dynamic inline update of the current profiled user's followers list to avoid full page refresh
+      setProfile((prev) => ({
+        ...prev,
+        followers: data.isFollowing
+          ? [...(prev.followers || []), user._id]
+          : (prev.followers || []).filter((id) => id !== user._id),
+      }));
+
+      toast.success(data.isFollowing ? 'Author followed' : 'Unfollowed author');
+    } catch (error) {
+      toast.error('Failed to toggle follow status');
+    }
+  };
+
   const formatJoinDate = (date) => {
     try {
       return new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -128,6 +163,36 @@ const Profile = () => {
           <div className="flex flex-col items-center space-y-4">
             <Loader2 className="h-10 w-10 animate-spin text-gray-900 dark:text-white" />
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Loading profile...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    logDebug('Profile', '[RENDER FALLBACK] Profile is null, rendering defensive error state.');
+    return (
+      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center space-y-4 max-w-md text-center px-6 py-12 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm">
+            <div className="p-3 bg-amber-500/10 rounded-full">
+              <AlertTriangle className="h-7 w-7 text-amber-500 animate-pulse" />
+            </div>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white">Profile Unavailable</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              We encountered an issue loading this writer's profile. Please verify your connection or click below to retry the connection.
+            </p>
+            <button
+              onClick={() => {
+                logDebug('Profile', '[RETRY] Retrying profile fetch manually...');
+                fetchProfile();
+              }}
+              className="mt-2 text-xs font-bold px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition shadow-sm"
+            >
+              Retry Connection
+            </button>
           </div>
         </div>
         <Footer />
@@ -198,7 +263,7 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* Edit / Save buttons */}
+              {/* Edit / Save / Follow buttons */}
               {isOwnProfile && !editing && (
                 <button
                   onClick={() => setEditing(true)}
@@ -206,6 +271,18 @@ const Profile = () => {
                 >
                   <Edit className="h-3.5 w-3.5" />
                   Edit Profile
+                </button>
+              )}
+              {!isOwnProfile && user && (
+                <button
+                  onClick={() => handleFollowToggle(id)}
+                  className={`flex items-center gap-1.5 text-xs font-bold px-5 py-2 rounded-full transition border ${
+                    user.following?.includes(id)
+                      ? 'text-gray-400 border-gray-200 dark:border-gray-800 hover:text-red-500 hover:border-red-250 hover:bg-red-50/5'
+                      : 'text-white bg-emerald-600 hover:bg-emerald-700 border-emerald-600'
+                  }`}
+                >
+                  {user.following?.includes(id) ? 'Following' : 'Follow'}
                 </button>
               )}
             </div>
@@ -299,7 +376,7 @@ const Profile = () => {
 
           {/* Stats strip */}
           {!editing && (
-            <div className="border-t border-gray-100 dark:border-gray-800 px-6 py-4 flex gap-8">
+            <div className="border-t border-gray-100 dark:border-gray-800 px-6 py-4 flex flex-wrap gap-8">
               <div>
                 <p className="text-xl font-black text-gray-900 dark:text-white">{posts.length}</p>
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Posts</p>
@@ -315,6 +392,14 @@ const Profile = () => {
                   {posts.reduce((acc, p) => acc + (p.likesCount || 0), 0)}
                 </p>
                 <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Likes</p>
+              </div>
+              <div>
+                <p className="text-xl font-black text-gray-900 dark:text-white">{profile.followers?.length || 0}</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Followers</p>
+              </div>
+              <div>
+                <p className="text-xl font-black text-gray-900 dark:text-white">{profile.following?.length || 0}</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Following</p>
               </div>
             </div>
           )}

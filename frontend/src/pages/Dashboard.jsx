@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PostCard from '../components/PostCard';
-import API from '../api/axios';
+import API, { isSilentError } from '../api/axios';
 import { toast } from 'react-toastify';
 import { 
   Loader2, 
@@ -29,7 +29,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   
   // Existing feed states
@@ -47,76 +47,76 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('for-you'); // 'for-you', 'following', 'featured', 'bookmarks'
   const [selectedTag, setSelectedTag] = useState('');
   const [featuredPosts, setFeaturedPosts] = useState([]);
-  const [followedWriters, setFollowedWriters] = useState(() => {
-    try {
-      const saved = localStorage.getItem('followed_writers');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  
+  // Derived follow state from synced Auth context
+  const followedWriters = user?.following || [];
 
-  // Fetch posts when activeFilter or activeTab changes
+  // ── EFFECT 1: Fetch posts when filter or tab changes ──
+  // Uses AbortController so previous in-flight requests are cancelled.
   useEffect(() => {
-    if (activeTab === 'for-you') {
-      fetchPosts(1);
-    }
-    if (user) {
-      fetchSavedPosts();
-    }
-  }, [activeFilter, activeTab]);
+    if (activeTab !== 'for-you') return;
+    const controller = new AbortController();
+    fetchPosts(1, controller.signal);
+    return () => controller.abort();
+  }, [activeFilter, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync followed writers to localStorage
+  // ── EFFECT 2: Fetch saved posts once when user is available ──
   useEffect(() => {
-    localStorage.setItem('followed_writers', JSON.stringify(followedWriters));
-  }, [followedWriters]);
+    if (!user) return;
+    const controller = new AbortController();
+    fetchSavedPosts(controller.signal);
+    return () => controller.abort();
+  }, [user?._id]); // re-run only if user identity changes
 
-  // Fetch featured posts once on mount for right sidebar
+  // ── EFFECT 3: Fetch featured posts once on mount ──
   useEffect(() => {
+    const controller = new AbortController();
     const fetchFeatured = async () => {
       try {
-        const { data } = await API.get('/posts/featured');
+        const { data } = await API.get('/posts/featured', { signal: controller.signal });
         setFeaturedPosts(data);
       } catch (err) {
-        console.error('Failed to fetch featured posts');
+        if (!isSilentError(err)) console.error('Failed to fetch featured posts:', err.message);
       }
     };
     fetchFeatured();
+    return () => controller.abort();
   }, []);
 
-  const fetchPosts = async (page = 1) => {
-    try {
-      if (page === 1) {
-        setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
 
-      const { data } = await API.get(`/posts?sortBy=${activeFilter}&page=${page}&limit=9`);
-      
-      if (page === 1) {
-        setPosts(data.posts);
-      } else {
-        setPosts(prev => [...prev, ...data.posts]);
-      }
-      
+  const fetchPosts = async (page = 1, signal) => {
+    try {
+      if (page === 1) setLoading(true);
+      else setLoadingMore(true);
+
+      const { data } = await API.get(
+        `/posts?sortBy=${activeFilter}&page=${page}&limit=9`,
+        { signal }
+      );
+
+      if (page === 1) setPosts(data.posts);
+      else setPosts(prev => [...prev, ...data.posts]);
+
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
       setHasMore(data.currentPage < data.totalPages);
     } catch (error) {
-      toast.error('Failed to fetch posts');
+      if (isSilentError(error)) return; // AbortError or AuthError — stay silent
+      toast.error('Failed to fetch posts', { toastId: 'fetch-posts-error' });
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
   };
 
-  const fetchSavedPosts = async () => {
+  const fetchSavedPosts = async (signal) => {
     try {
-      const { data } = await API.get('/users/saved');
-      setSavedPosts(data.map((post) => post._id));
+      const { data } = await API.get('/users/saved', { signal });
+      setSavedPosts(data.map(post => post._id));
     } catch (error) {
-      console.error('Failed to fetch saved posts');
+      if (!isSilentError(error)) {
+        console.error('Failed to fetch saved posts:', error.message);
+      }
     }
   };
 
@@ -140,7 +140,7 @@ const Dashboard = () => {
       setPosts(data);
       setHasMore(false);
     } catch (error) {
-      toast.error('Search failed');
+      if (!isSilentError(error)) toast.error('Search failed', { toastId: 'search-error' });
     } finally {
       setLoading(false);
     }
@@ -162,23 +162,14 @@ const Dashboard = () => {
   const handleLike = async (postId) => {
     try {
       const { data } = await API.put(`/posts/${postId}/like`);
-      setPosts(
-        posts.map((post) =>
-          post._id === postId
-            ? { ...post, likesCount: data.likesCount, likes: data.likes }
-            : post
-        )
-      );
-      // Synchronize featured posts as well
-      setFeaturedPosts(
-        featuredPosts.map((post) =>
-          post._id === postId
-            ? { ...post, likesCount: data.likesCount, likes: data.likes }
-            : post
-        )
-      );
+      setPosts(posts.map(post =>
+        post._id === postId ? { ...post, likesCount: data.likesCount, likes: data.likes } : post
+      ));
+      setFeaturedPosts(featuredPosts.map(post =>
+        post._id === postId ? { ...post, likesCount: data.likesCount, likes: data.likes } : post
+      ));
     } catch (error) {
-      toast.error('Failed to like post');
+      if (!isSilentError(error)) toast.error('Failed to like post', { toastId: 'like-error' });
     }
   };
 
@@ -187,25 +178,28 @@ const Dashboard = () => {
       const { data } = await API.put(`/users/save/${postId}`);
       setSavedPosts(data.savedPosts);
       toast.success(
-        savedPosts.includes(postId) ? 'Post removed from Bookmarks' : 'Post saved to Bookmarks'
+        savedPosts.includes(postId) ? 'Post removed from Bookmarks' : 'Post saved to Bookmarks',
+        { toastId: `save-${postId}` }
       );
-      
-      // If we are currently viewing bookmarks, remove the unsaved item from view immediately
       if (activeTab === 'bookmarks') {
         setPosts(prev => prev.filter(post => post._id !== postId));
       }
     } catch (error) {
-      toast.error('Failed to save post');
+      if (!isSilentError(error)) toast.error('Failed to save post', { toastId: 'save-error' });
     }
   };
 
-  const handleFollowToggle = (authorId) => {
-    if (followedWriters.includes(authorId)) {
-      setFollowedWriters(prev => prev.filter(id => id !== authorId));
-      toast.success('Unfollowed author');
-    } else {
-      setFollowedWriters(prev => [...prev, authorId]);
-      toast.success('Author followed');
+  const handleFollowToggle = async (authorId) => {
+    try {
+      const { data } = await API.put(`/users/profile/follow/${authorId}`);
+      updateUser({ following: data.currentUserFollowing });
+      toast.success(data.isFollowing ? 'Author followed' : 'Unfollowed author', {
+        toastId: `follow-toggle-${authorId}`,
+      });
+    } catch (error) {
+      if (!isSilentError(error)) {
+        toast.error(error.response?.data?.message || 'Failed to toggle follow status');
+      }
     }
   };
 
@@ -219,7 +213,7 @@ const Dashboard = () => {
       setPosts(data);
       setHasMore(false);
     } catch (error) {
-      toast.error('Failed to load posts for tag');
+      if (!isSilentError(error)) toast.error('Failed to load posts for tag', { toastId: 'tag-error' });
     } finally {
       setLoading(false);
     }
@@ -240,7 +234,7 @@ const Dashboard = () => {
         setPosts(data);
         setHasMore(false);
       } catch (err) {
-        toast.error('Failed to load featured posts');
+        if (!isSilentError(err)) toast.error('Failed to load featured posts', { toastId: 'featured-error' });
       } finally {
         setLoading(false);
       }
@@ -251,7 +245,7 @@ const Dashboard = () => {
         setPosts(data);
         setHasMore(false);
       } catch (err) {
-        toast.error('Failed to load saved posts');
+        if (!isSilentError(err)) toast.error('Failed to load saved posts', { toastId: 'saved-error' });
       } finally {
         setLoading(false);
       }

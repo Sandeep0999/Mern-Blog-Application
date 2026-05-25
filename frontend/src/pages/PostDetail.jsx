@@ -24,7 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 const PostDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
@@ -38,15 +38,8 @@ const PostDetail = () => {
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Synced local follow state
-  const [followedWriters, setFollowedWriters] = useState(() => {
-    try {
-      const saved = localStorage.getItem('followed_writers');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  // Derived follow state from synced Auth context
+  const followedWriters = user?.following || [];
 
   useEffect(() => {
     fetchPost();
@@ -55,10 +48,6 @@ const PostDetail = () => {
       checkIfSaved();
     }
   }, [id]);
-
-  useEffect(() => {
-    localStorage.setItem('followed_writers', JSON.stringify(followedWriters));
-  }, [followedWriters]);
 
   const fetchPost = async () => {
     try {
@@ -123,13 +112,15 @@ const PostDetail = () => {
     }
   };
 
-  const handleFollowToggle = (authorId) => {
-    if (followedWriters.includes(authorId)) {
-      setFollowedWriters(prev => prev.filter(id => id !== authorId));
-      toast.success('Unfollowed author');
-    } else {
-      setFollowedWriters(prev => [...prev, authorId]);
-      toast.success('Author followed');
+  const handleFollowToggle = async (authorId) => {
+    try {
+      const { data } = await API.put(`/users/profile/follow/${authorId}`);
+      updateUser({ following: data.currentUserFollowing });
+      toast.success(data.isFollowing ? 'Author followed' : 'Unfollowed author', {
+        toastId: `follow-toggle-${authorId}`,
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to toggle follow status');
     }
   };
 

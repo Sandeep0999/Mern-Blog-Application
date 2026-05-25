@@ -127,3 +127,46 @@ export const getMyPosts = async(req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Follow/Unfollow user
+// @route   PUT /api/users/profile/follow/:id
+// @access  Private
+export const followUser = async (req, res) => {
+  try {
+    const currentUserId = req.user._id;
+    const targetUserId = req.params.id;
+
+    if (currentUserId.toString() === targetUserId.toString()) {
+      return res.status(400).json({ message: 'You cannot follow yourself' });
+    }
+
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isFollowing = targetUser.followers.includes(currentUserId);
+
+    if (isFollowing) {
+      // Unfollow
+      await User.findByIdAndUpdate(currentUserId, { $pull: { following: targetUserId } });
+      await User.findByIdAndUpdate(targetUserId, { $pull: { followers: currentUserId } });
+    } else {
+      // Follow
+      await User.findByIdAndUpdate(currentUserId, { $addToSet: { following: targetUserId } });
+      await User.findByIdAndUpdate(targetUserId, { $addToSet: { followers: currentUserId } });
+    }
+
+    const updatedTargetUser = await User.findById(targetUserId);
+    const updatedCurrentUser = await User.findById(currentUserId);
+
+    res.json({
+      isFollowing: !isFollowing,
+      followersCount: updatedTargetUser.followers.length,
+      followingCount: updatedTargetUser.following.length,
+      currentUserFollowing: updatedCurrentUser.following,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

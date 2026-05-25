@@ -57,7 +57,10 @@ const postSchema = new mongoose.Schema(
   }
 );
 
-// Index for search functionality
+// Indexes for performance and scalability
+postSchema.index({ author: 1 });
+postSchema.index({ createdAt: -1 });
+postSchema.index({ likesCount: -1 });
 postSchema.index({ title: 'text', subtitle: 'text', tags: 'text' });
 
 const Post = mongoose.model('Post', postSchema);

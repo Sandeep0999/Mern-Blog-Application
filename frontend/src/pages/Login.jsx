@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { LogIn, ShieldCheck, ArrowLeft } from 'lucide-react';
 import API from '../api/axios';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 const Login = () => {
   const [step, setStep] = useState('login');
@@ -17,7 +18,7 @@ const Login = () => {
     password: '',
   });
 
-  const { setUser } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -35,9 +36,9 @@ const Login = () => {
 
       setUserId(data.userId);
       setStep('otp');
-      toast.success('OTP sent to your email');
+      toast.success('OTP sent to your email', { toastId: 'otp-sent' });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
+      toast.error(error.response?.data?.message || 'Login failed', { toastId: 'login-error' });
     } finally {
       setLoading(false);
     }
@@ -62,14 +63,13 @@ const Login = () => {
 
       setOtpVerified(true);
 
-      // Save auth
-      localStorage.setItem('user', JSON.stringify(data));
-      setUser(data);
+      // Save auth via context (handles localStorage + resetLogoutState)
+      login(data);
 
-      toast.success('Login successful!');
+      toast.success('Login successful!', { toastId: 'login-success' });
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid OTP');
+      toast.error(error.response?.data?.message || 'Invalid OTP', { toastId: 'otp-error' });
     } finally {
       setLoading(false);
     }
@@ -196,6 +196,19 @@ const Login = () => {
                 ← Back to login
               </button>
             </form>
+          )}
+
+          {/* Google Sign-In — only shown on the login step */}
+          {step === 'login' && (
+            <div className="mt-5">
+              {/* OR divider */}
+              <div className="relative flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+                <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-widest flex-shrink-0">or</span>
+                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+              </div>
+              <GoogleAuthButton label="Continue with Google" />
+            </div>
           )}
 
           <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 text-center">

@@ -21,10 +21,24 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
+      // Not required — Google-only accounts have no password
       minlength: [6, 'Password must be at least 6 characters'],
       select: false,
     },
+
+    // ── Google OAuth ──────────────────────────────────────────
+    googleId: {
+      type: String,
+      default: null,
+      index: { sparse: true }, // allows null but indexes real values uniquely
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local',
+    },
+    // ─────────────────────────────────────────────────────────
+
     otpHash: {
       type: String,
       select: false,
@@ -52,15 +66,31 @@ const userSchema = new mongoose.Schema(
         ref: 'Post',
       },
     ],
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-// Hash password before saving
+// Indexes for performance and scalability
+userSchema.index({ followers: 1 });
+userSchema.index({ following: 1 });
+
+// Hash password before saving (skip if no password — Google accounts)
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
   const salt = await bcrypt.genSalt(10);

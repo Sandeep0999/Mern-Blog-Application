@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { UserPlus, ArrowLeft } from 'lucide-react';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -154,6 +155,16 @@ const Signup = () => {
               {loading ? 'Creating your account...' : 'Create Account'}
             </button>
           </form>
+
+          {/* Google Sign-Up */}
+          <div className="mt-5">
+            <div className="relative flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-widest flex-shrink-0">or</span>
+              <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+            </div>
+            <GoogleAuthButton label="Sign up with Google" />
+          </div>
 
           <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400">

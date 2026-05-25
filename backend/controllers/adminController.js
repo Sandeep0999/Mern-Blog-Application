@@ -26,14 +26,27 @@ export const deleteUser = async (req, res) => {
     }
 
 
+    // Fetch user's post IDs before deleting them
+    const userPostIds = await Post.find({ author: req.params.id }).distinct('_id');
+
     await Post.deleteMany({ author: req.params.id });
-
-
     await Comment.deleteMany({ author: req.params.id });
 
+    // Pull deleted posts from other users' bookmarks
     await User.updateMany(
       { savedPosts: { $exists: true } },
-      { $pull: { savedPosts: { $in: await Post.find({ author: req.params.id }).distinct('_id') } } }
+      { $pull: { savedPosts: { $in: userPostIds } } }
+    );
+
+    // Pull deleted user from other users' followers/following arrays to preserve system integrity
+    await User.updateMany(
+      {},
+      {
+        $pull: {
+          followers: req.params.id,
+          following: req.params.id,
+        },
+      }
     );
 
     await user.deleteOne();
