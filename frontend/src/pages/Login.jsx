@@ -6,11 +6,11 @@ import { LogIn, ShieldCheck } from 'lucide-react';
 import API from '../api/axios';
 
 const Login = () => {
-  const [step, setStep] = useState('login'); // login | otp
+  const [step, setStep] = useState('login');
   const [userId, setUserId] = useState(null);
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false); // ✅ NEW
+  const [otpVerified, setOtpVerified] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
