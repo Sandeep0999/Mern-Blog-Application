@@ -297,12 +297,12 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
+      <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300">
         <Navbar showSearch onSearch={handleSearch} />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center space-y-4">
-            <Loader2 className="h-10 w-10 animate-spin text-gray-900 dark:text-white" />
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Loading your reading feed...</p>
+            <Loader2 className="h-9 w-9 animate-spin text-gray-400 dark:text-amber-400" />
+            <p className="text-sm font-medium text-gray-400 dark:text-[#555d74]">Loading your reading feed...</p>
           </div>
         </div>
         <Footer />
@@ -311,14 +311,14 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300">
       <Navbar showSearch onSearch={handleSearch} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-10 items-start">
           
           {/* ================= LEFT SIDEBAR (STICKY NAVIGATION) ================= */}
-          <aside className="hidden md:flex md:col-span-3 lg:col-span-2 flex-col space-y-1.5 sticky top-24 self-start border-r border-gray-100 dark:border-gray-800/80 pr-4 xl:pr-6">
+          <aside className="hidden md:flex md:col-span-3 lg:col-span-2 flex-col space-y-1 sticky top-24 self-start border-r border-gray-100 dark:border-white/[0.04] pr-4 xl:pr-6">
             <button 
               onClick={() => handleTabChange('for-you')}
               className={activeTab === 'for-you' && !selectedTag && !searchQuery ? 'sidebar-link-active' : 'sidebar-link'}
@@ -356,19 +356,26 @@ const Dashboard = () => {
             )}
 
             {user?.role === 'admin' && (
-              <Link to="/admin" className="sidebar-link text-red-600 dark:text-red-400">
+              <Link to="/admin" className="sidebar-link !text-red-500 dark:!text-red-400">
                 <Shield className="h-5 w-5" />
                 <span>Admin</span>
               </Link>
             )}
+
+            {/* Sidebar footer hint */}
+            <div className="pt-4 mt-2 border-t border-gray-100 dark:border-white/[0.04]">
+              <p className="px-4 text-[10px] text-gray-300 dark:text-[#2e3347] font-medium">
+                DailyPen · 2026
+              </p>
+            </div>
           </aside>
 
           {/* ================= CENTER FEED AREA ================= */}
-          <section className="col-span-1 md:col-span-9 lg:col-span-7 xl:col-span-7 space-y-6">
+          <section className="col-span-1 md:col-span-9 lg:col-span-7 xl:col-span-7 space-y-5">
             
             {/* Category and Filter Navigation Tabs */}
-            <div className="border-b border-gray-100 dark:border-gray-800/80 pb-3 flex items-center justify-between">
-              <div className="flex items-center space-x-6 overflow-x-auto pb-1 scrollbar-none">
+            <div className="border-b border-gray-100 dark:border-white/[0.05] pb-0 flex items-center justify-between">
+              <div className="flex items-center space-x-5 overflow-x-auto scrollbar-none">
                 <button
                   onClick={() => handleTabChange('for-you')}
                   className={activeTab === 'for-you' ? 'feed-tab-active' : 'feed-tab'}
@@ -395,16 +402,16 @@ const Dashboard = () => {
                 </button>
               </div>
 
-              {/* Sparkle decoration */}
-              <div className="hidden sm:flex items-center space-x-1.5 text-xs text-amber-500 font-medium px-2.5 py-1 rounded-full bg-amber-500/5 border border-amber-500/10">
-                <Sparkles className="h-3.5 w-3.5 fill-current" />
-                <span>Premium View</span>
+              {/* Sparkle badge */}
+              <div className="hidden sm:flex items-center space-x-1.5 text-[11px] text-amber-600 dark:text-amber-400 font-semibold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 flex-shrink-0">
+                <Sparkles className="h-3 w-3 fill-current" />
+                <span>Premium</span>
               </div>
             </div>
 
             {/* Sub-Filters: Sort buttons (Only for "For You" tab when no search/tag filter is active) */}
             {activeTab === 'for-you' && !searchQuery && !selectedTag && (
-              <div className="flex flex-wrap gap-2 pt-1 pb-2">
+              <div className="flex flex-wrap gap-2 pt-1">
                 {sortingFilters.map((filter) => {
                   const Icon = filter.icon;
                   const isActive = activeFilter === filter.id;
@@ -412,11 +419,7 @@ const Dashboard = () => {
                     <button
                       key={filter.id}
                       onClick={() => handleFilterChange(filter.id)}
-                      className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                        isActive
-                          ? 'bg-gray-900 text-white dark:bg-gray-150 dark:text-gray-950 shadow-sm'
-                          : 'bg-gray-50 text-gray-600 dark:bg-gray-900/50 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-800/60'
-                      }`}
+                      className={isActive ? 'filter-pill-active' : 'filter-pill'}
                     >
                       <Icon className="h-3.5 w-3.5" />
                       <span>{filter.label}</span>
@@ -428,20 +431,20 @@ const Dashboard = () => {
 
             {/* Filter Indicators (Active Tag Search or Search queries) */}
             {(searchQuery || selectedTag) && (
-              <div className="flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 p-4 rounded-xl">
+              <div className="flex items-center justify-between bg-gray-50 dark:bg-[#111318] border border-gray-100 dark:border-white/[0.05] p-4 rounded-xl">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {searchQuery ? `Search results for "${searchQuery}"` : `Feed filtered by tag: #${selectedTag}`}
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-[#f0f2f8]">
+                    {searchQuery ? `Results for "${searchQuery}"` : `Tag: #${selectedTag}`}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Found {displayedPosts.length} matches
+                  <p className="text-xs text-gray-400 dark:text-[#555d74] mt-0.5">
+                    {displayedPosts.length} {displayedPosts.length === 1 ? 'match' : 'matches'}
                   </p>
                 </div>
                 <button
                   onClick={clearFilters}
-                  className="text-xs font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-800 hover:bg-gray-50 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-lg transition"
+                  className="text-xs font-bold text-gray-700 dark:text-[#c8d0e0] bg-white dark:bg-[#1c1f2b] hover:bg-gray-50 dark:hover:bg-[#252836] border border-gray-200 dark:border-white/[0.06] px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  Clear filter
+                  Clear
                 </button>
               </div>
             )}
@@ -450,41 +453,41 @@ const Dashboard = () => {
             {displayedPosts.length === 0 ? (
               activeTab === 'following' ? (
                 // Elegant empty state for Following tab
-                <div className="text-center py-16 px-6 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900/10 max-w-md mx-auto animate-fadeIn">
-                  <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800/80 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-gray-800">
-                    <Users className="h-7 w-7 text-gray-400 dark:text-gray-500" />
+                <div className="text-center py-16 px-6 border border-dashed border-gray-200 dark:border-white/[0.05] rounded-2xl bg-white dark:bg-[#111318] max-w-md mx-auto animate-fadeIn">
+                  <div className="w-14 h-14 bg-gray-50 dark:bg-[#1c1f2b] rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-white/[0.05]">
+                    <Users className="h-6 w-6 text-gray-300 dark:text-[#555d74]" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-[#f0f2f8] mb-2">
                     Personalize your reading experience
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-                    Follow writers to populate your feed with their latest stories. Find active users in the suggestions panel.
+                  <p className="text-sm text-gray-400 dark:text-[#555d74] mb-6 leading-relaxed">
+                    Follow writers to populate your feed with their latest stories.
                   </p>
                   
                   {suggestedWriters.length > 0 && (
-                    <div className="text-left space-y-2.5 max-w-xs mx-auto">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 text-center">
-                        Active Writers to Follow
+                    <div className="text-left space-y-2 max-w-xs mx-auto">
+                      <p className="text-[10px] font-bold text-gray-400 dark:text-[#555d74] uppercase tracking-widest mb-2 text-center">
+                        Writers to Follow
                       </p>
                       {suggestedWriters.slice(0, 3).map((writer) => (
-                        <div key={writer._id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/40 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800/80">
+                        <div key={writer._id} className="flex items-center justify-between bg-gray-50 dark:bg-[#1c1f2b] p-2.5 rounded-xl border border-gray-100 dark:border-white/[0.05]">
                           <div className="flex items-center space-x-2.5 min-w-0">
                             {writer.avatar ? (
                               <img src={writer.avatar} alt={writer.name} className="h-7 w-7 rounded-full object-cover" />
                             ) : (
-                              <div className="h-7 w-7 rounded-full bg-gray-900 dark:bg-gray-800 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                              <div className="h-7 w-7 rounded-full bg-gray-800 dark:bg-[#252836] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                                 {writer.name.charAt(0).toUpperCase()}
                               </div>
                             )}
                             <div className="min-w-0">
-                              <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{writer.name}</p>
+                              <p className="text-xs font-semibold text-gray-900 dark:text-[#c8d0e0] truncate">{writer.name}</p>
                             </div>
                           </div>
                           <button
                             onClick={() => handleFollowToggle(writer._id)}
-                            className="text-[10px] font-bold text-gray-900 dark:text-white px-2.5 py-1 bg-white dark:bg-gray-900 hover:bg-gray-50 border border-gray-200 dark:border-gray-700 rounded-full transition flex items-center space-x-1"
+                            className="text-[10px] font-bold text-gray-700 dark:text-[#c8d0e0] px-2.5 py-1 bg-white dark:bg-[#252836] hover:bg-gray-50 dark:hover:bg-[#2e3347] border border-gray-200 dark:border-white/[0.06] rounded-full transition-colors"
                           >
-                            <span>Follow</span>
+                            Follow
                           </button>
                         </div>
                       ))}
@@ -493,12 +496,12 @@ const Dashboard = () => {
                 </div>
               ) : (
                 // General empty state
-                <div className="text-center py-20 bg-gray-50/50 dark:bg-gray-900/10 border border-gray-150 dark:border-gray-850 rounded-2xl">
-                  <BookOpen className="h-10 w-10 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                <div className="text-center py-20 bg-gray-50 dark:bg-[#111318] border border-dashed border-gray-100 dark:border-white/[0.05] rounded-2xl">
+                  <BookOpen className="h-9 w-9 text-gray-300 dark:text-[#2e3347] mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-gray-900 dark:text-[#f0f2f8] mb-1.5">
                     No articles found
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+                  <p className="text-sm text-gray-400 dark:text-[#555d74] max-w-xs mx-auto">
                     {searchQuery 
                       ? 'No results matched your search terms.' 
                       : 'Be the first writer to publish an article on DailyPen!'}
@@ -506,7 +509,7 @@ const Dashboard = () => {
                   {(searchQuery || selectedTag) && (
                     <button
                       onClick={clearFilters}
-                      className="mt-4 text-xs font-bold text-gray-900 dark:text-white px-4 py-2 bg-white dark:bg-gray-850 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-55 transition"
+                      className="mt-5 text-xs font-semibold text-gray-700 dark:text-[#c8d0e0] px-4 py-2 bg-white dark:bg-[#1c1f2b] border border-gray-200 dark:border-white/[0.06] rounded-lg hover:bg-gray-50 dark:hover:bg-[#252836] transition-colors"
                     >
                       Browse all posts
                     </button>
@@ -530,22 +533,30 @@ const Dashboard = () => {
 
             {/* Load More Button */}
             {activeTab === 'for-you' && !searchQuery && !selectedTag && hasMore && (
-              <div className="mt-8 pt-4 flex justify-center">
+              <div className="mt-6 flex justify-center">
                 <button
                   onClick={handleLoadMore}
                   disabled={loadingMore}
-                  className="flex items-center space-x-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-850 text-gray-900 dark:text-white px-6 py-2.5 rounded-full font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-xs"
+                  className="flex items-center space-x-2
+                             border border-gray-200 dark:border-white/[0.08]
+                             bg-white dark:bg-[#161820]
+                             hover:bg-gray-50 dark:hover:bg-[#1c1f2b]
+                             text-gray-700 dark:text-[#c8d0e0]
+                             px-6 py-2.5 rounded-full font-medium
+                             transition-all duration-200
+                             disabled:opacity-40 disabled:cursor-not-allowed
+                             shadow-sm text-xs"
                 >
                   {loadingMore ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Loading more...</span>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
+                      <span>Loading...</span>
                     </>
                   ) : (
                     <>
-                      <span>Load More Stories</span>
-                      <span className="text-gray-400 text-[10px]">
-                        ({currentPage} of {totalPages})
+                      <span>Load more stories</span>
+                      <span className="text-gray-300 dark:text-[#2e3347] text-[10px]">
+                        ({currentPage}/{totalPages})
                       </span>
                     </>
                   )}
@@ -553,19 +564,20 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* ================= NEWSLETTER CARD (Polished & Content-aligned) ================= */}
-            <div className="mt-12 bg-gray-50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-2xl p-6 sm:p-8 relative overflow-hidden transition-all duration-300 hover:shadow-sm">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-gray-900/5 dark:bg-white/5 rounded-full blur-xl pointer-events-none"></div>
+            {/* ================= NEWSLETTER CARD ================= */}
+            <div className="mt-10 bg-gray-50 dark:bg-[#111318] border border-gray-100 dark:border-white/[0.05] rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+              {/* Decorative glow */}
+              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-400/10 dark:bg-amber-400/5 rounded-full blur-2xl pointer-events-none" />
               
               <div className="relative max-w-xl">
-                <div className="inline-flex items-center justify-center p-2 bg-gray-900 dark:bg-gray-800 text-white rounded-lg mb-4">
-                  <Mail className="h-5 w-5" />
+                <div className="inline-flex items-center justify-center p-2 bg-amber-500 text-white rounded-xl mb-4 shadow-sm">
+                  <Mail className="h-4.5 w-4.5" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                  Never miss an update from DailyPen
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-[#f0f2f8] leading-snug mb-2">
+                  Never miss a story from DailyPen
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6 leading-relaxed">
-                  Join our curated reading community to get the week's most liked stories, new tech insight, and writing recommendations delivered directly to your inbox.
+                <p className="text-xs sm:text-sm text-gray-400 dark:text-[#555d74] mb-5 leading-relaxed">
+                  Join our curated reading community — get the week's best stories and writing tips delivered to your inbox.
                 </p>
 
                 <form 
@@ -582,13 +594,16 @@ const Dashboard = () => {
                   <input
                     type="email"
                     name="email"
-                    placeholder="Enter your email address"
+                    placeholder="your@email.com"
                     required
-                    className="w-full px-4 py-2.5 text-sm bg-white dark:bg-gray-850 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-300"
+                    className="dp-input flex-1"
                   />
                   <button
                     type="submit"
-                    className="w-full sm:w-auto px-5 py-2.5 bg-gray-900 dark:bg-gray-150 hover:bg-gray-800 dark:hover:bg-white text-white dark:text-gray-950 font-semibold text-sm rounded-xl transition shadow-sm whitespace-nowrap"
+                    className="w-full sm:w-auto px-5 py-2.5
+                               bg-amber-500 hover:bg-amber-400
+                               text-white font-semibold text-sm
+                               rounded-xl transition-colors shadow-sm whitespace-nowrap"
                   >
                     Subscribe
                   </button>
@@ -599,15 +614,15 @@ const Dashboard = () => {
           </section>
 
           {/* ================= RIGHT SIDEBAR WIDGETS ================= */}
-          <aside className="hidden lg:flex lg:col-span-3 xl:col-span-3 flex-col space-y-6 sticky top-24 self-start">
+          <aside className="hidden lg:flex lg:col-span-3 xl:col-span-3 flex-col space-y-5 sticky top-24 self-start">
             
             {/* Suggested Writers Widget */}
             {suggestedWriters.length > 0 && (
               <div className="widget-card">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#4b5063] uppercase tracking-widest mb-4">
                   Suggested Writers
                 </h3>
-                <div className="space-y-3.5">
+                <div className="space-y-4">
                   {suggestedWriters.slice(0, 4).map((writer) => {
                     const isFollowing = followedWriters.includes(writer._id);
                     return (
@@ -620,18 +635,18 @@ const Dashboard = () => {
                             <img 
                               src={writer.avatar} 
                               alt={writer.name} 
-                              className="h-8 w-8 rounded-full object-cover border border-gray-100 dark:border-gray-800" 
+                              className="h-8 w-8 rounded-full object-cover border border-gray-100 dark:border-white/[0.07] group-hover:scale-105 transition-transform duration-200" 
                             />
                           ) : (
-                            <div className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-800 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+                            <div className="h-8 w-8 rounded-full bg-gray-800 dark:bg-[#1c1f2b] flex items-center justify-center text-white font-bold text-xs flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
                               {writer.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                           <div className="min-w-0">
-                            <h4 className="text-xs font-bold text-gray-800 dark:text-gray-250 truncate group-hover:text-gray-900 dark:group-hover:text-white">
+                            <h4 className="text-xs font-semibold text-gray-800 dark:text-[#c8d0e0] truncate group-hover:text-gray-900 dark:group-hover:text-[#f0f2f8] transition-colors">
                               {writer.name}
                             </h4>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate max-w-[120px]">
+                            <p className="text-[10px] text-gray-400 dark:text-[#4b5063] truncate max-w-[110px] mt-0.5">
                               {writer.bio || 'Author on DailyPen'}
                             </p>
                           </div>
@@ -639,10 +654,10 @@ const Dashboard = () => {
                         
                         <button
                           onClick={() => handleFollowToggle(writer._id)}
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all duration-200 border ${
+                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all duration-200 border flex-shrink-0 ${
                             isFollowing
-                              ? 'bg-transparent text-gray-400 border-gray-200 dark:border-gray-800 hover:text-red-500 hover:border-red-200 hover:bg-red-50/5'
-                              : 'bg-white dark:bg-gray-800 text-gray-950 dark:text-gray-100 border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                              ? 'text-gray-400 dark:text-[#555d74] border-gray-200 dark:border-white/[0.08] hover:text-red-400 hover:border-red-300 dark:hover:border-red-500/30'
+                              : 'text-gray-700 dark:text-[#c8d0e0] bg-white dark:bg-[#1c1f2b] border-gray-200 dark:border-white/[0.08] hover:bg-gray-50 dark:hover:bg-[#252836]'
                           }`}
                         >
                           {isFollowing ? 'Following' : 'Follow'}
@@ -657,14 +672,14 @@ const Dashboard = () => {
             {/* Trending Tags Widget */}
             {topTags.length > 0 && (
               <div className="widget-card">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                <div className="flex items-center justify-between mb-3.5">
+                  <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#4b5063] uppercase tracking-widest">
                     Trending Tags
                   </h3>
                   {selectedTag && (
                     <button 
                       onClick={clearFilters}
-                      className="text-[10px] text-gray-500 dark:text-gray-400 hover:underline"
+                      className="text-[10px] text-gray-400 dark:text-[#555d74] hover:text-gray-700 dark:hover:text-[#8891a8] transition-colors"
                     >
                       View All
                     </button>
@@ -677,11 +692,7 @@ const Dashboard = () => {
                       <button
                         key={tag}
                         onClick={() => handleTagClick(tag)}
-                        className={`text-[11px] px-2.5 py-1 rounded-full transition-all border duration-200 ${
-                          isSelected
-                            ? 'bg-gray-900 text-white border-gray-900 dark:bg-gray-150 dark:text-gray-950 dark:border-gray-150'
-                            : 'bg-gray-50 dark:bg-gray-800/40 text-gray-600 dark:text-gray-400 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                        }`}
+                        className={isSelected ? 'tag-pill-active' : 'tag-pill'}
                       >
                         #{tag}
                       </button>
@@ -691,28 +702,28 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Recommended Reads (Popular posts) */}
+            {/* Popular Reads Widget */}
             {featuredPosts.length > 0 && (
               <div className="widget-card">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#4b5063] uppercase tracking-widest mb-4">
                   Popular Reads
                 </h3>
                 <div className="space-y-4">
                   {featuredPosts.slice(0, 3).map((post, idx) => (
                     <div key={post._id} className="flex space-x-3 items-start min-w-0">
-                      <span className="text-2xl font-bold font-sans text-gray-200 dark:text-gray-850 leading-none">
-                        0{idx + 1}
+                      <span className="text-xl font-black font-sans text-gray-200 dark:text-[#252836] leading-none flex-shrink-0 w-5 pt-0.5">
+                        {idx + 1}
                       </span>
                       <div className="min-w-0">
                         <Link 
                           to={`/profile/${post.author?._id}`}
-                          className="text-[10px] font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white truncate block"
+                          className="text-[10px] font-semibold text-gray-400 dark:text-[#555d74] hover:text-gray-700 dark:hover:text-[#8891a8] truncate block transition-colors"
                         >
                           {post.author?.name}
                         </Link>
                         <Link 
                           to={`/post/${post._id}`}
-                          className="text-xs font-bold text-gray-900 dark:text-white leading-tight hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-150 mt-0.5 block line-clamp-2"
+                          className="text-xs font-semibold text-gray-800 dark:text-[#c8d0e0] leading-snug hover:text-gray-600 dark:hover:text-[#f0f2f8] transition-colors duration-150 mt-0.5 block line-clamp-2"
                         >
                           {post.title}
                         </Link>
@@ -723,11 +734,11 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Footer rights note for Premium layout */}
-            <div className="px-4 text-[10px] text-gray-400 dark:text-gray-600 font-medium">
+            {/* Footer note */}
+            <div className="px-1 text-[10px] text-gray-300 dark:text-[#2e3347] font-medium">
               <p className="flex items-center space-x-1.5">
-                <span>DailyPen Reading Platform</span>
-                <span>•</span>
+                <span>DailyPen</span>
+                <span>·</span>
                 <span>© 2026</span>
               </p>
             </div>
@@ -738,11 +749,13 @@ const Dashboard = () => {
       </main>
 
       {/* ================= MOBILE BOTTOM STICKY NAVIGATION BAR ================= */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-950/95 border-t border-gray-150 dark:border-gray-800/80 backdrop-blur-md z-40 px-6 py-3 flex items-center justify-between shadow-lg transition-colors duration-300">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/97 dark:bg-[#0c0e14]/97 border-t border-gray-100 dark:border-white/[0.05] backdrop-blur-md z-40 px-6 py-3 flex items-center justify-between shadow-lg dark:shadow-black/50 transition-colors duration-300">
         <button 
           onClick={() => handleTabChange('for-you')}
-          className={`flex flex-col items-center justify-center space-y-1 transition ${
-            activeTab === 'for-you' && !selectedTag && !searchQuery ? 'text-gray-900 dark:text-white scale-105' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
+          className={`flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 ${
+            activeTab === 'for-you' && !selectedTag && !searchQuery
+              ? 'text-gray-900 dark:text-amber-400 scale-105'
+              : 'text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8]'
           }`}
         >
           <Home className="h-5 w-5" />
@@ -751,8 +764,10 @@ const Dashboard = () => {
 
         <button 
           onClick={() => handleTabChange('bookmarks')}
-          className={`flex flex-col items-center justify-center space-y-1 transition ${
-            activeTab === 'bookmarks' ? 'text-gray-900 dark:text-white scale-105' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
+          className={`flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 ${
+            activeTab === 'bookmarks'
+              ? 'text-gray-900 dark:text-amber-400 scale-105'
+              : 'text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8]'
           }`}
         >
           <Bookmark className="h-5 w-5" />
@@ -761,8 +776,10 @@ const Dashboard = () => {
 
         <button 
           onClick={() => setActiveTab('following')}
-          className={`flex flex-col items-center justify-center space-y-1 transition ${
-            activeTab === 'following' ? 'text-gray-900 dark:text-white scale-105' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
+          className={`flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 ${
+            activeTab === 'following'
+              ? 'text-gray-900 dark:text-amber-400 scale-105'
+              : 'text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8]'
           }`}
         >
           <Users className="h-5 w-5" />
@@ -771,7 +788,7 @@ const Dashboard = () => {
 
         <Link 
           to="/create-post"
-          className="flex flex-col items-center justify-center space-y-1 text-gray-400 dark:text-gray-500 hover:text-gray-600"
+          className="flex flex-col items-center justify-center space-y-0.5 text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8] transition-colors duration-200"
         >
           <PenSquare className="h-5 w-5" />
           <span className="text-[9px] font-semibold">Write</span>
@@ -780,7 +797,7 @@ const Dashboard = () => {
         {user && (
           <Link 
             to={`/profile/${user._id}`}
-            className="flex flex-col items-center justify-center space-y-1 text-gray-400 dark:text-gray-500 hover:text-gray-600"
+            className="flex flex-col items-center justify-center space-y-0.5 text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8] transition-colors duration-200"
           >
             <User className="h-5 w-5" />
             <span className="text-[9px] font-semibold">Profile</span>

@@ -12,6 +12,7 @@
     "@react-oauth/google": "^0.13.5",
     "axios": "^1.6.2",
     "date-fns": "^3.0.6",
+    "dompurify": "^3.4.6",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

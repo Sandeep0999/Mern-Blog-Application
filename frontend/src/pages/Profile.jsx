@@ -157,12 +157,12 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
+      <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center space-y-4">
-            <Loader2 className="h-10 w-10 animate-spin text-gray-900 dark:text-white" />
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Loading profile...</p>
+            <Loader2 className="h-9 w-9 animate-spin text-gray-400 dark:text-amber-400" />
+            <p className="text-sm font-medium text-gray-400 dark:text-[#555d74]">Loading profile...</p>
           </div>
         </div>
         <Footer />
@@ -173,23 +173,23 @@ const Profile = () => {
   if (!profile) {
     logDebug('Profile', '[RENDER FALLBACK] Profile is null, rendering defensive error state.');
     return (
-      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
+      <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center space-y-4 max-w-md text-center px-6 py-12 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm">
+          <div className="flex flex-col items-center space-y-4 max-w-md text-center px-6 py-12 bg-white dark:bg-[#161820] border border-gray-100 dark:border-white/[0.06] rounded-2xl shadow-sm">
             <div className="p-3 bg-amber-500/10 rounded-full">
-              <AlertTriangle className="h-7 w-7 text-amber-500 animate-pulse" />
+              <AlertTriangle className="h-7 w-7 text-amber-500" />
             </div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">Profile Unavailable</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              We encountered an issue loading this writer's profile. Please verify your connection or click below to retry the connection.
+            <h3 className="text-base font-bold text-gray-900 dark:text-[#f0f2f8]">Profile Unavailable</h3>
+            <p className="text-xs text-gray-400 dark:text-[#555d74] leading-relaxed">
+              We encountered an issue loading this writer's profile. Please verify your connection or click below to retry.
             </p>
             <button
               onClick={() => {
                 logDebug('Profile', '[RETRY] Retrying profile fetch manually...');
                 fetchProfile();
               }}
-              className="mt-2 text-xs font-bold px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition shadow-sm"
+              className="mt-2 text-xs font-bold px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-sm"
             >
               Retry Connection
             </button>
@@ -203,7 +203,7 @@ const Profile = () => {
   const displayedPosts = activeTab === 'posts' ? posts : savedPosts;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300">
       <Navbar />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
@@ -211,7 +211,7 @@ const Profile = () => {
         {/* ═══════════════════════════════════════════════════════
             PROFILE HEADER CARD
             ═══════════════════════════════════════════════════════ */}
-        <div className="relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mb-6">
+        <div className="relative bg-white dark:bg-[#111318] border border-gray-100 dark:border-white/[0.06] rounded-2xl shadow-sm overflow-hidden mb-6">
 
           {/* Gradient Banner */}
           <div className="h-28 sm:h-36 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 dark:from-gray-800 dark:via-gray-900 dark:to-black relative overflow-hidden">
@@ -298,7 +298,7 @@ const Profile = () => {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-850/40 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-400 transition"
+                    className="dp-input"
                   />
                 </div>
                 <div>
@@ -310,7 +310,7 @@ const Profile = () => {
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                     rows={3}
                     maxLength={200}
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-850/40 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-400 resize-none transition"
+                    className="dp-input resize-none"
                     placeholder="Tell readers about yourself..."
                   />
                   <p className="text-xs text-gray-400 mt-1 text-right">{formData.bio.length}/200</p>
@@ -341,7 +341,7 @@ const Profile = () => {
             ) : (
               <div>
                 <div className="flex items-center gap-2.5 mb-1">
-                  <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                  <h1 className="text-2xl font-black text-gray-900 dark:text-[#f0f2f8] tracking-tight">
                     {profile.name}
                   </h1>
                   {profile.role === 'admin' && (
@@ -352,13 +352,13 @@ const Profile = () => {
                   )}
                 </div>
                 {profile.bio && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-3 max-w-lg">
+                  <p className="text-sm text-gray-600 dark:text-[#8891a8] leading-relaxed mb-3 max-w-lg">
                     {profile.bio}
                   </p>
                 )}
 
                 {/* Meta info row */}
-                <div className="flex flex-wrap gap-4 text-xs text-gray-400 dark:text-gray-500 font-medium">
+                <div className="flex flex-wrap gap-4 text-xs text-gray-400 dark:text-[#555d74] font-medium">
                   <span className="flex items-center gap-1.5">
                     <Mail className="h-3.5 w-3.5" />
                     {profile.email}
@@ -376,30 +376,30 @@ const Profile = () => {
 
           {/* Stats strip */}
           {!editing && (
-            <div className="border-t border-gray-100 dark:border-gray-800 px-6 py-4 flex flex-wrap gap-8">
+            <div className="border-t border-gray-100 dark:border-white/[0.05] px-6 py-4 flex flex-wrap gap-8">
               <div>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{posts.length}</p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Posts</p>
+                <p className="text-xl font-black text-gray-900 dark:text-[#f0f2f8]">{posts.length}</p>
+                <p className="text-[11px] text-gray-400 dark:text-[#4b5063] font-semibold uppercase tracking-wider mt-0.5">Posts</p>
               </div>
               {isOwnProfile && (
                 <div>
-                  <p className="text-xl font-black text-gray-900 dark:text-white">{savedPosts.length}</p>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Saved</p>
+                  <p className="text-xl font-black text-gray-900 dark:text-[#f0f2f8]">{savedPosts.length}</p>
+                  <p className="text-[11px] text-gray-400 dark:text-[#4b5063] font-semibold uppercase tracking-wider mt-0.5">Saved</p>
                 </div>
               )}
               <div>
-                <p className="text-xl font-black text-gray-900 dark:text-white">
+                <p className="text-xl font-black text-gray-900 dark:text-[#f0f2f8]">
                   {posts.reduce((acc, p) => acc + (p.likesCount || 0), 0)}
                 </p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Likes</p>
+                <p className="text-[11px] text-gray-400 dark:text-[#4b5063] font-semibold uppercase tracking-wider mt-0.5">Likes</p>
               </div>
               <div>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{profile.followers?.length || 0}</p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Followers</p>
+                <p className="text-xl font-black text-gray-900 dark:text-[#f0f2f8]">{profile.followers?.length || 0}</p>
+                <p className="text-[11px] text-gray-400 dark:text-[#4b5063] font-semibold uppercase tracking-wider mt-0.5">Followers</p>
               </div>
               <div>
-                <p className="text-xl font-black text-gray-900 dark:text-white">{profile.following?.length || 0}</p>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider mt-0.5">Following</p>
+                <p className="text-xl font-black text-gray-900 dark:text-[#f0f2f8]">{profile.following?.length || 0}</p>
+                <p className="text-[11px] text-gray-400 dark:text-[#4b5063] font-semibold uppercase tracking-wider mt-0.5">Following</p>
               </div>
             </div>
           )}
@@ -409,20 +409,20 @@ const Profile = () => {
             TABS (Own profile only)
             ═══════════════════════════════════════════════════════ */}
         {isOwnProfile && (
-          <div className="flex border-b border-gray-100 dark:border-gray-800 mb-6">
+          <div className="flex border-b border-gray-100 dark:border-white/[0.05] mb-6">
             <button
               onClick={() => setActiveTab('posts')}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-all border-b-2 ${
                 activeTab === 'posts'
-                  ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'border-amber-500 dark:border-amber-400 text-gray-900 dark:text-[#f0f2f8]'
+                  : 'border-transparent text-gray-400 dark:text-[#555d74] hover:text-gray-700 dark:hover:text-[#8891a8]'
               }`}
             >
               <FileText className="h-4 w-4" />
               My Posts
               {posts.length > 0 && (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                  activeTab === 'posts' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                  activeTab === 'posts' ? 'bg-amber-500/20 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-gray-100 dark:bg-[#1c1f2b] text-gray-400 dark:text-[#555d74]'
                 }`}>
                   {posts.length}
                 </span>
@@ -432,15 +432,15 @@ const Profile = () => {
               onClick={() => setActiveTab('saved')}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold transition-all border-b-2 ${
                 activeTab === 'saved'
-                  ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'border-amber-500 dark:border-amber-400 text-gray-900 dark:text-[#f0f2f8]'
+                  : 'border-transparent text-gray-400 dark:text-[#555d74] hover:text-gray-700 dark:hover:text-[#8891a8]'
               }`}
             >
               <Bookmark className="h-4 w-4" />
               Saved Posts
               {savedPosts.length > 0 && (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                  activeTab === 'saved' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                  activeTab === 'saved' ? 'bg-amber-500/20 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-gray-100 dark:bg-[#1c1f2b] text-gray-400 dark:text-[#555d74]'
                 }`}>
                   {savedPosts.length}
                 </span>
@@ -454,28 +454,28 @@ const Profile = () => {
             ═══════════════════════════════════════════════════════ */}
         <div>
           {displayedPosts.length === 0 ? (
-            <div className="text-center py-20 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900/10">
+            <div className="text-center py-20 border border-dashed border-gray-200 dark:border-white/[0.05] rounded-2xl bg-white dark:bg-[#111318]">
               {activeTab === 'saved' ? (
                 <>
-                  <Bookmark className="h-10 w-10 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">No saved posts</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <Bookmark className="h-9 w-9 text-gray-200 dark:text-[#252836] mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-gray-900 dark:text-[#f0f2f8] mb-1">No saved posts</h3>
+                  <p className="text-sm text-gray-400 dark:text-[#555d74]">
                     Posts you bookmark will appear here
                   </p>
                   <Link
                     to="/dashboard"
-                    className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition"
+                    className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                   >
                     Browse stories
                   </Link>
                 </>
               ) : (
                 <>
-                  <FileText className="h-10 w-10 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                  <FileText className="h-9 w-9 text-gray-200 dark:text-[#252836] mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-gray-900 dark:text-[#f0f2f8] mb-1">
                     {isOwnProfile ? 'No posts yet' : 'No posts published'}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-400 dark:text-[#555d74]">
                     {isOwnProfile
                       ? 'Your published stories will appear here.'
                       : "This writer hasn't published any posts yet."}
@@ -483,7 +483,7 @@ const Profile = () => {
                   {isOwnProfile && (
                     <Link
                       to="/create-post"
-                      className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition"
+                      className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                     >
                       Write your first post
                     </Link>
@@ -492,9 +492,9 @@ const Profile = () => {
               )}
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-[#111318] border border-gray-100 dark:border-white/[0.06] rounded-2xl overflow-hidden">
               {displayedPosts.map((post, idx) => (
-                <div key={post._id} className={idx !== 0 ? 'border-t border-gray-100 dark:border-gray-800' : ''}>
+                <div key={post._id} className={idx !== 0 ? 'border-t border-gray-100 dark:border-white/[0.04]' : ''}>
                   <PostCard
                     post={post}
                     onLike={handleLike}

@@ -3,8 +3,9 @@ import Comment from '../models/Comment.js';
 import User from '../models/User.js';
 import cloudinary from '../config/cloudinary.js';
 import { validationResult } from 'express-validator';
+import { escapeRegex } from '../utils/validators.js';
 
-export const getPosts = async (req, res) => {
+export const getPosts = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -44,14 +45,14 @@ export const getPosts = async (req, res) => {
       total,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Get single post
 // @route   GET /api/posts/:id
 // @access  Public
-export const getPost = async (req, res) => {
+export const getPost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id).populate(
       'author',
@@ -64,14 +65,14 @@ export const getPost = async (req, res) => {
 
     res.json(post);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Create post
 // @route   POST /api/posts
 // @access  Private
-export const createPost = async (req, res) => {
+export const createPost = async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -106,14 +107,14 @@ export const createPost = async (req, res) => {
 
     res.status(201).json(populatedPost);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Update post
 // @route   PUT /api/posts/:id
 // @access  Private
-export const updatePost = async (req, res) => {
+export const updatePost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
 
@@ -154,14 +155,14 @@ export const updatePost = async (req, res) => {
 
     res.json(populatedPost);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Delete post
 // @route   DELETE /api/posts/:id
 // @access  Private
-export const deletePost = async (req, res) => {
+export const deletePost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
 
@@ -192,14 +193,14 @@ export const deletePost = async (req, res) => {
 
     res.json({ message: 'Post removed' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Like/Unlike post
 // @route   PUT /api/posts/:id/like
 // @access  Private
-export const likePost = async (req, res) => {
+export const likePost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
 
@@ -208,39 +209,54 @@ export const likePost = async (req, res) => {
     }
 
     const isLiked = post.likes.includes(req.user._id);
+    let updatedPost;
 
     if (isLiked) {
-      // Unlike
-      post.likes = post.likes.filter(
-        (userId) => userId.toString() !== req.user._id.toString()
+      // Unlike atomically
+      updatedPost = await Post.findOneAndUpdate(
+        { _id: req.params.id, likes: req.user._id },
+        {
+          $pull: { likes: req.user._id },
+          $inc: { likesCount: -1 }
+        },
+        { new: true }
       );
-      post.likesCount = post.likes.length;
     } else {
-      // Like
-      post.likes.push(req.user._id);
-      post.likesCount = post.likes.length;
+      // Like atomically
+      updatedPost = await Post.findOneAndUpdate(
+        { _id: req.params.id, likes: { $ne: req.user._id } },
+        {
+          $addToSet: { likes: req.user._id },
+          $inc: { likesCount: 1 }
+        },
+        { new: true }
+      );
     }
 
-    await post.save();
+    // Fallback if findOneAndUpdate returned null due to race condition
+    if (!updatedPost) {
+      updatedPost = await Post.findById(req.params.id);
+    }
 
-    res.json({ likes: post.likes, likesCount: post.likesCount });
+    res.json({ likes: updatedPost.likes, likesCount: updatedPost.likesCount });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Search posts
 // @route   GET /api/posts/search/:query
 // @access  Public
-export const searchPosts = async (req, res) => {
+export const searchPosts = async (req, res, next) => {
   try {
     const { query } = req.params;
+    const escapedQuery = escapeRegex(query);
 
     const posts = await Post.find({
       $or: [
-        { title: { $regex: query, $options: 'i' } },
-        { subtitle: { $regex: query, $options: 'i' } },
-        { tags: { $regex: query, $options: 'i' } },
+        { title: { $regex: escapedQuery, $options: 'i' } },
+        { subtitle: { $regex: escapedQuery, $options: 'i' } },
+        { tags: { $regex: escapedQuery, $options: 'i' } },
       ],
     })
       .populate('author', 'name avatar')
@@ -249,14 +265,14 @@ export const searchPosts = async (req, res) => {
 
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Get comments for a post
 // @route   GET /api/posts/:id/comments
 // @access  Public
-export const getComments = async (req, res) => {
+export const getComments = async (req, res, next) => {
   try {
     const comments = await Comment.find({ post: req.params.id })
       .populate('author', 'name avatar')
@@ -264,14 +280,14 @@ export const getComments = async (req, res) => {
 
     res.json(comments);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Add comment to post
 // @route   POST /api/posts/:id/comments
 // @access  Private
-export const addComment = async (req, res) => {
+export const addComment = async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -290,9 +306,8 @@ export const addComment = async (req, res) => {
       post: req.params.id,
     });
 
-    // Update comments count
-    post.commentsCount = await Comment.countDocuments({ post: req.params.id });
-    await post.save();
+    // Update comments count atomically
+    await Post.findByIdAndUpdate(req.params.id, { $inc: { commentsCount: 1 } });
 
     const populatedComment = await Comment.findById(comment._id).populate(
       'author',
@@ -301,14 +316,14 @@ export const addComment = async (req, res) => {
 
     res.status(201).json(populatedComment);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Delete comment
 // @route   DELETE /api/posts/:postId/comments/:commentId
 // @access  Private
-export const deleteComment = async (req, res) => {
+export const deleteComment = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.commentId);
 
@@ -328,22 +343,16 @@ export const deleteComment = async (req, res) => {
 
     await comment.deleteOne();
 
-    // Update comments count
-    const post = await Post.findById(req.params.postId);
-    if (post) {
-      post.commentsCount = await Comment.countDocuments({
-        post: req.params.postId,
-      });
-      await post.save();
-    }
+    // Update comments count atomically
+    await Post.findByIdAndUpdate(req.params.postId, { $inc: { commentsCount: -1 } });
 
     res.json({ message: 'Comment removed' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const getPostsByCategories = async (req, res) => {
+export const getPostsByCategories = async (req, res, next) => {
   try {
     const posts = await Post.find().populate('author', 'name avatar').sort({ createdAt: -1 });
 
@@ -358,11 +367,11 @@ export const getPostsByCategories = async (req, res) => {
 
     res.json(grouped);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const getFeaturedPosts = async (req, res) => {
+export const getFeaturedPosts = async (req, res, next) => {
   try {
     const posts = await Post.find()
       .sort({ likesCount: -1, createdAt: -1 })
@@ -370,11 +379,11 @@ export const getFeaturedPosts = async (req, res) => {
       .populate('author', 'name avatar');
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const getLatestPosts = async (req, res) => {
+export const getLatestPosts = async (req, res, next) => {
   try {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
@@ -382,20 +391,21 @@ export const getLatestPosts = async (req, res) => {
       .populate('author', 'name avatar');
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const getPostsByTag = async (req, res) => {
+export const getPostsByTag = async (req, res, next) => {
   try {
+    const escapedTag = escapeRegex(req.params.tag);
     const posts = await Post.find({
-      tags: { $regex: req.params.tag, $options: 'i' },
+      tags: { $regex: escapedTag, $options: 'i' },
     })
       .sort({ createdAt: -1 })
       .populate('author', 'name avatar');
 
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };

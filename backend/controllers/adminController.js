@@ -3,17 +3,17 @@ import Post from '../models/Post.js';
 import Comment from '../models/Comment.js';
 
 
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find().select('-password').sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 
-export const deleteUser = async (req, res) => {
+export const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
 
@@ -53,11 +53,11 @@ export const deleteUser = async (req, res) => {
 
     res.json({ message: 'User and associated data removed' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-export const getDashboardStats = async (req, res) => {
+export const getDashboardStats = async (req, res, next) => {
   try {
     const totalUsers = await User.countDocuments();
     const totalPosts = await Post.countDocuments();
@@ -81,6 +81,6 @@ export const getDashboardStats = async (req, res) => {
       recentPosts,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };

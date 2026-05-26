@@ -7,6 +7,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import mongoose from 'mongoose';
 
 // Route imports
 import authRoutes from './routes/auth.js';
@@ -35,28 +36,51 @@ const limiter = rateLimit({
 
 app.use('/api/', limiter);
 
+// Stricter rate limiting for sensitive auth routes (login, register, OTP)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // limit each IP to 15 auth/OTP attempts per 15 minutes
+  message: 'Too many authentication attempts from this IP, please try again later.',
+});
+
 // Body parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS
+// CORS configuration accepting comma-separated production origins or developer fallbacks
+const allowedOrigins = process.env.CLIENT_URL 
+  ? process.env.CLIENT_URL.split(',') 
+  : ['http://localhost:5173', 'http://localhost:5174'];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
   })
 );
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Health check
+// Health check (verifies Node server status + active database connection)
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  const dbState = mongoose.connection.readyState;
+  const states = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+  
+  if (dbState === 1) {
+    res.json({ status: 'ok', database: states[dbState] });
+  } else {
+    res.status(503).json({ status: 'error', database: states[dbState] });
+  }
 });
 
 // Error handler

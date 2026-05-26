@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import API from '../api/axios';
 import { toast } from 'react-toastify';
+import DOMPurify from 'dompurify';
 import {
   Heart,
   MessageCircle,
@@ -203,12 +204,12 @@ const PostDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
+      <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center space-y-4">
-            <Loader2 className="h-10 w-10 animate-spin text-gray-900 dark:text-white" />
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Opening reading canvas...</p>
+            <Loader2 className="h-9 w-9 animate-spin text-gray-400 dark:text-amber-400" />
+            <p className="text-sm font-medium text-gray-400 dark:text-[#555d74]">Opening reading canvas...</p>
           </div>
         </div>
         <Footer />
@@ -219,16 +220,16 @@ const PostDetail = () => {
   const isLiked = post.likes?.includes(user?._id);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950 transition-colors duration-300 select-none">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300 select-none">
       <Navbar />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 md:py-10 animate-fadeIn">
         
         {/* Navigation Breadcrumb */}
-        <div className="mb-6">
+        <div className="mb-8">
           <button
             onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center space-x-1 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="inline-flex items-center space-x-1.5 text-xs font-semibold text-gray-400 dark:text-[#555d74] hover:text-gray-900 dark:hover:text-[#f0f2f8] transition-colors duration-200"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Back to Stories</span>
@@ -240,20 +241,20 @@ const PostDetail = () => {
           {/* ================= TITLE & SUBTITLE ================= */}
           <div className="space-y-3">
             {post.tags && post.tags.length > 0 && (
-              <span className="inline-block px-2.5 py-0.5 bg-gray-50 dark:bg-gray-900/60 text-gray-650 dark:text-gray-400 border border-gray-100 dark:border-gray-800 text-[11px] font-bold rounded-full uppercase tracking-wider">
+              <span className="inline-block px-2.5 py-0.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20 text-[11px] font-bold rounded-full uppercase tracking-wider">
                 {post.tags[0]}
               </span>
             )}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-sans font-black tracking-tight text-gray-900 dark:text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-sans font-black tracking-tight text-gray-900 dark:text-[#f0f2f8] leading-tight">
               {post.title}
             </h1>
-            <p className="text-lg sm:text-xl font-sans font-light text-gray-550 dark:text-gray-400 leading-relaxed font-sans">
+            <p className="text-lg sm:text-xl font-sans font-light text-gray-500 dark:text-[#8891a8] leading-relaxed">
               {post.subtitle}
             </p>
           </div>
 
           {/* ================= AUTHOR HEADER & ACTION BAR ================= */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-y border-gray-100 dark:border-gray-800/80 gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-y border-gray-100 dark:border-white/[0.05] gap-4">
             
             {/* Author Profile */}
             <div className="flex items-center space-x-3">
@@ -275,7 +276,7 @@ const PostDetail = () => {
                 <div className="flex items-center">
                   <Link
                     to={`/profile/${post.author._id}`}
-                    className="text-sm font-bold text-gray-900 dark:text-white hover:underline leading-none"
+                    className="text-sm font-bold text-gray-900 dark:text-[#f0f2f8] hover:underline leading-none"
                   >
                     {post.author.name}
                   </Link>
@@ -284,10 +285,10 @@ const PostDetail = () => {
                   {user && user._id !== post.author._id && (
                     <button
                       onClick={() => handleFollowToggle(post.author._id)}
-                      className={`ml-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition border ${
+                      className={`ml-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all duration-200 border ${
                         followedWriters.includes(post.author._id)
-                          ? 'text-gray-400 border-gray-200 dark:border-gray-800 hover:text-red-500 hover:border-red-200 hover:bg-red-50/5'
-                          : 'text-emerald-600 hover:text-emerald-700 border-emerald-100 dark:border-emerald-900/60 bg-emerald-500/5 hover:bg-emerald-500/10'
+                          ? 'text-gray-400 dark:text-[#555d74] border-gray-200 dark:border-white/[0.08] hover:text-red-400 hover:border-red-200'
+                          : 'text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 border-emerald-100 dark:border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10'
                       }`}
                     >
                       {followedWriters.includes(post.author._id) ? 'Following' : 'Follow'}
@@ -295,7 +296,7 @@ const PostDetail = () => {
                   )}
                 </div>
                 
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 font-medium flex items-center space-x-1">
+                <p className="text-[11px] text-gray-400 dark:text-[#4b5063] mt-1 font-medium flex items-center space-x-1">
                   <Calendar className="h-3 w-3" />
                   <span>Published {formatDate(post.createdAt)}</span>
                 </p>
@@ -311,10 +312,10 @@ const PostDetail = () => {
                   onClick={handleLike}
                   className={`flex items-center space-x-1.5 text-xs font-semibold transition-colors duration-200 ${
                     isLiked
-                      ? 'text-red-500 hover:text-red-600'
-                      : 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400'
+                      ? 'text-red-500 dark:text-red-400'
+                      : 'text-gray-400 dark:text-[#555d74] hover:text-red-500 dark:hover:text-red-400'
                   }`}
-                  aria-label={isLiked ? "Unlike post" : "Like post"}
+                  aria-label={isLiked ? 'Unlike post' : 'Like post'}
                 >
                   <Heart className={`h-5 w-5 hover:scale-110 transition-transform ${isLiked ? 'fill-current' : ''}`} />
                   <span>{post.likesCount || 0}</span>
@@ -322,7 +323,7 @@ const PostDetail = () => {
 
                 <a
                   href="#comments"
-                  className="flex items-center space-x-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  className="flex items-center space-x-1.5 text-xs font-semibold text-gray-400 dark:text-[#555d74] hover:text-gray-700 dark:hover:text-[#8891a8] transition-colors"
                 >
                   <MessageCircle className="h-5 w-5 hover:scale-110 transition-transform" />
                   <span>{post.commentsCount || 0}</span>
@@ -332,10 +333,10 @@ const PostDetail = () => {
                   onClick={handleSave}
                   className={`text-xs font-semibold transition-colors duration-200 ${
                     isSaved
-                      ? 'text-yellow-600 dark:text-yellow-500'
-                      : 'text-gray-400 dark:text-gray-500 hover:text-yellow-650'
+                      ? 'text-amber-500 dark:text-amber-400'
+                      : 'text-gray-400 dark:text-[#555d74] hover:text-amber-500 dark:hover:text-amber-400'
                   }`}
-                  aria-label={isSaved ? "Unsave post" : "Save post"}
+                  aria-label={isSaved ? 'Unsave post' : 'Save post'}
                 >
                   <Bookmark className={`h-5 w-5 hover:scale-110 transition-transform ${isSaved ? 'fill-current' : ''}`} />
                 </button>
@@ -380,7 +381,7 @@ const PostDetail = () => {
           <div className="max-w-2xl mx-auto py-4 select-text">
             <div
               className="post-content"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
             />
           </div>
 
@@ -391,7 +392,7 @@ const PostDetail = () => {
                 <Link
                   key={index}
                   to={`/dashboard`}
-                  className="px-3 py-1 bg-gray-50 dark:bg-gray-900 border border-gray-150 dark:border-gray-800 text-xs font-semibold text-gray-600 dark:text-gray-450 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="tag-pill"
                 >
                   #{tag}
                 </Link>
@@ -400,8 +401,8 @@ const PostDetail = () => {
           )}
 
           {/* ================= CURATED COMMENTS SECTION ================= */}
-          <div id="comments" className="max-w-2xl mx-auto border border-gray-100 dark:border-gray-800/80 bg-gray-50/20 dark:bg-gray-900/15 rounded-2xl p-6 sm:p-8">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+          <div id="comments" className="max-w-2xl mx-auto border border-gray-100 dark:border-white/[0.05] bg-gray-50/20 dark:bg-[#111318] rounded-2xl p-6 sm:p-8">
+            <h2 className="text-base font-bold text-gray-900 dark:text-[#f0f2f8] mb-6">
               Responses ({post.commentsCount || 0})
             </h2>
 
@@ -427,13 +428,19 @@ const PostDetail = () => {
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder="What are your thoughts?"
                       rows={3}
-                      className="w-full px-4 py-3 text-sm bg-white dark:bg-gray-850/40 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-200 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-gray-350 dark:focus:ring-gray-700 resize-none transition"
+                      className="dp-input resize-none w-full"
                     />
                     <div className="flex justify-end mt-2">
                       <button
                         type="submit"
                         disabled={submittingComment || !commentText.trim()}
-                        className="flex items-center space-x-1.5 bg-gray-900 dark:bg-gray-100 hover:bg-gray-850 dark:hover:bg-white text-white dark:text-gray-950 px-4 py-2 rounded-full font-bold text-xs shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center space-x-1.5
+                                   bg-gray-900 dark:bg-amber-500
+                                   hover:bg-gray-800 dark:hover:bg-amber-400
+                                   text-white
+                                   px-4 py-2 rounded-full font-bold text-xs
+                                   shadow-sm transition-all duration-200
+                                   disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {submittingComment ? (
                           <>
@@ -452,13 +459,13 @@ const PostDetail = () => {
                 </div>
               </form>
             ) : (
-              <div className="bg-gray-50/50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800/80 rounded-xl p-5 mb-8 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              <div className="bg-gray-50 dark:bg-[#161820] border border-gray-100 dark:border-white/[0.05] rounded-xl p-5 mb-8 text-center">
+                <p className="text-sm text-gray-400 dark:text-[#555d74] mb-4">
                   Please log in to add a response to this story.
                 </p>
                 <Link
                   to="/login"
-                  className="inline-block bg-gray-900 dark:bg-gray-100 hover:bg-gray-850 dark:hover:bg-white text-white dark:text-gray-950 px-5 py-2 rounded-full font-bold text-xs transition"
+                  className="inline-block bg-gray-900 dark:bg-amber-500 hover:bg-gray-800 dark:hover:bg-amber-400 text-white px-5 py-2 rounded-full font-bold text-xs transition-colors"
                 >
                   Log in
                 </Link>
@@ -479,29 +486,29 @@ const PostDetail = () => {
                         <img
                           src={comment.author.avatar}
                           alt={comment.author.name}
-                          className="h-8.5 w-8.5 rounded-full object-cover border border-gray-200 dark:border-gray-800 group-hover:scale-102 transition"
+                          className="h-8 w-8 rounded-full object-cover border border-gray-200 dark:border-white/[0.08] group-hover:scale-105 transition-transform"
                         />
                       ) : (
-                        <div className="h-8.5 w-8.5 rounded-full bg-gray-900 dark:bg-gray-800 flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0 group-hover:scale-102 transition">
+                        <div className="h-8 w-8 rounded-full bg-gray-800 dark:bg-[#1c1f2b] flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0 group-hover:scale-105 transition-transform">
                           {comment.author.name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </Link>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="bg-white dark:bg-gray-900/50 border border-gray-100 dark:border-gray-850/80 rounded-2xl p-4 shadow-sm">
+                      <div className="bg-white dark:bg-[#161820] border border-gray-100 dark:border-white/[0.05] rounded-2xl p-4 shadow-sm">
                         <div className="flex items-center justify-between mb-1">
                           <Link
                             to={`/profile/${comment.author._id}`}
-                            className="text-xs font-bold text-gray-800 dark:text-gray-250 hover:underline truncate"
+                            className="text-xs font-bold text-gray-800 dark:text-[#c8d0e0] hover:underline truncate"
                           >
                             {comment.author.name}
                           </Link>
-                          <span className="text-[10px] text-gray-450 dark:text-gray-500 font-medium">
+                          <span className="text-[10px] text-gray-400 dark:text-[#4b5063] font-medium flex-shrink-0 ml-2">
                             {formatDate(comment.createdAt)}
                           </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-gray-650 dark:text-gray-300 leading-relaxed font-sans mt-1">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-[#8891a8] leading-relaxed font-sans mt-1">
                           {comment.content}
                         </p>
                       </div>
@@ -526,16 +533,16 @@ const PostDetail = () => {
         </article>
       </main>
 
-      {/* ================= CONTRAST-SAFE MODALS ================= */}
+      {/* ================= CONTRAST-SAFE DELETE MODAL ================= */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 px-4 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white dark:bg-gray-900 border border-gray-150 dark:border-gray-800 shadow-2xl rounded-2xl max-w-md w-full p-6 relative">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 px-4 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-[#161820] border border-gray-100 dark:border-white/[0.07] shadow-2xl rounded-2xl max-w-md w-full p-6 relative">
             <button
               onClick={closeDeleteModal}
-              className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition"
+              className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1c1f2b] text-gray-400 dark:text-[#555d74] transition-colors"
               aria-label="Close modal"
             >
-              <X className="h-4.5 w-4.5" />
+              <X className="h-4 w-4" />
             </button>
 
             <div className="flex items-start space-x-4">
@@ -546,20 +553,20 @@ const PostDetail = () => {
               </div>
               
               <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2.5">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-[#f0f2f8] mb-2">
                   Delete {deleteType === 'post' ? 'Post' : 'Response'}
                 </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
+                <p className="text-xs text-gray-400 dark:text-[#555d74] leading-relaxed mb-6">
                   {deleteType === 'post'
                     ? 'Are you sure you want to delete this story? This action is permanent, and all associated responses will be deleted immediately.'
                     : 'Are you sure you want to remove this response? This action is permanent and cannot be undone.'}
                 </p>
                 
-                <div className="flex space-x-3.5">
+                <div className="flex space-x-3">
                   <button
                     onClick={closeDeleteModal}
                     disabled={deleting}
-                    className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-750 rounded-full text-xs font-bold text-gray-650 dark:text-gray-350 hover:bg-gray-50 dark:hover:bg-gray-850 transition disabled:opacity-50"
+                    className="flex-1 px-4 py-2 border border-gray-200 dark:border-white/[0.08] rounded-full text-xs font-bold text-gray-600 dark:text-[#8891a8] hover:bg-gray-50 dark:hover:bg-[#1c1f2b] transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>

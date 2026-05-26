@@ -57,3 +57,8 @@ export const commentValidation = [
     .isLength({ max: 1000 })
     .withMessage('Comment cannot exceed 1000 characters'),
 ];
+
+export const escapeRegex = (string) => {
+  if (typeof string !== 'string') return '';
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};

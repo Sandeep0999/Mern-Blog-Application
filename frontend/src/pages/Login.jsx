@@ -76,10 +76,10 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 transition-colors duration-300 relative overflow-hidden px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0c0e14] transition-colors duration-300 relative overflow-hidden px-4">
       {/* Background Decorative Glows */}
-      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-gray-900/5 dark:bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gray-900/5 dark:bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-amber-400/5 dark:bg-amber-400/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-400/5 dark:bg-violet-400/5 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-md w-full relative z-10 space-y-6">
         
@@ -99,7 +99,7 @@ const Login = () => {
         </div>
 
         {/* Card Form Wrapper */}
-        <div className="bg-white dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800/80 shadow-xl dark:shadow-black/45 rounded-2xl p-8 backdrop-blur-md">
+        <div className="bg-white dark:bg-[#111318] border border-gray-100 dark:border-white/[0.06] shadow-xl dark:shadow-black/60 rounded-2xl p-8 backdrop-blur-md">
           <div className="flex items-center justify-center mb-5">
             <div className="p-3 bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 rounded-full shadow-sm">
               {step === 'login' ? (
@@ -110,7 +110,7 @@ const Login = () => {
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-center text-gray-900 dark:text-white mb-6">
+          <h2 className="text-lg font-bold text-center text-gray-900 dark:text-[#f0f2f8] mb-6">
             {step === 'login' ? 'Login to your account' : 'Verify OTP'}
           </h2>
 
@@ -118,7 +118,7 @@ const Login = () => {
           {step === 'login' && (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-semibold text-gray-400 dark:text-[#555d74] uppercase tracking-wider mb-1.5">
                   Email Address
                 </label>
                 <input
@@ -128,12 +128,12 @@ const Login = () => {
                   onChange={handleChange}
                   required
                   placeholder="name@domain.com"
-                  className="w-full px-4 py-3 text-sm border border-gray-250/70 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/40 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all placeholder-gray-400"
+                  className="dp-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-semibold text-gray-400 dark:text-[#555d74] uppercase tracking-wider mb-1.5">
                   Password
                 </label>
                 <input
@@ -143,14 +143,20 @@ const Login = () => {
                   onChange={handleChange}
                   required
                   placeholder="••••••••"
-                  className="w-full px-4 py-3 text-sm border border-gray-250/70 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/40 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all placeholder-gray-400"
+                  className="dp-input"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 bg-gray-900 dark:bg-gray-100 hover:bg-gray-850 dark:hover:bg-white text-white dark:text-gray-950 py-3 rounded-xl font-bold text-sm shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-2
+                           bg-gray-900 dark:bg-amber-500
+                           hover:bg-gray-800 dark:hover:bg-amber-400
+                           text-white
+                           py-3 rounded-xl font-bold text-sm
+                           shadow-sm transition-all duration-200
+                           disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {loading ? 'Sending verification OTP...' : 'Login'}
               </button>
@@ -161,7 +167,7 @@ const Login = () => {
           {step === 'otp' && (
             <form onSubmit={handleOtpSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 text-center">
+                <label className="block text-[10px] font-semibold text-gray-400 dark:text-[#555d74] uppercase tracking-wider mb-1.5 text-center">
                   6-Digit OTP Code
                 </label>
                 <input
@@ -172,14 +178,20 @@ const Login = () => {
                   }
                   maxLength={6}
                   placeholder="000 000"
-                  className="w-full px-4 py-3 text-center tracking-[0.4em] font-sans font-bold text-lg border border-gray-250/70 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/40 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all placeholder-gray-300"
+                  className="dp-input text-center tracking-[0.4em] font-bold text-lg"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading || otpVerified}
-                className="w-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-850 dark:hover:bg-white text-white dark:text-gray-950 py-3 rounded-xl font-bold text-sm shadow-sm transition disabled:opacity-50"
+                className="w-full
+                           bg-gray-900 dark:bg-amber-500
+                           hover:bg-gray-800 dark:hover:bg-amber-400
+                           text-white
+                           py-3 rounded-xl font-bold text-sm
+                           shadow-sm transition-all duration-200
+                           disabled:opacity-40"
               >
                 {loading ? 'Verifying OTP code...' : 'Verify OTP'}
               </button>
@@ -211,12 +223,12 @@ const Login = () => {
             </div>
           )}
 
-          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-white/[0.05] text-center">
+            <p className="text-xs text-gray-400 dark:text-[#555d74]">
               New to DailyPen?{' '}
               <Link
                 to="/signup"
-                className="text-gray-900 dark:text-white font-bold hover:underline"
+                className="text-gray-900 dark:text-amber-400 font-bold hover:underline"
               >
                 Create an account
               </Link>

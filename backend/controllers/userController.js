@@ -5,7 +5,7 @@ import cloudinary from '../config/cloudinary.js';
 // @desc    Get user profile
 // @route   GET /api/users/profile/:id
 // @access  Public
-export const getUserProfile = async (req, res) => {
+export const getUserProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
 
@@ -19,14 +19,14 @@ export const getUserProfile = async (req, res) => {
 
     res.json({ user, posts });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private
-export const updateProfile = async (req, res) => {
+export const updateProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
 
@@ -61,14 +61,14 @@ export const updateProfile = async (req, res) => {
       role: updatedUser.role,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Save post
 // @route   PUT /api/users/save/:postId
 // @access  Private
-export const savePost = async (req, res) => {
+export const savePost = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     const post = await Post.findById(req.params.postId);
@@ -93,14 +93,14 @@ export const savePost = async (req, res) => {
 
     res.json({ savedPosts: user.savedPosts });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Get saved posts
 // @route   GET /api/users/saved
 // @access  Private
-export const getSavedPosts = async (req, res) => {
+export const getSavedPosts = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).populate({
       path: 'savedPosts',
@@ -109,14 +109,14 @@ export const getSavedPosts = async (req, res) => {
 
     res.json(user.savedPosts);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Get user's own posts
 // @route   GET /api/users/my-posts
 // @access  Private
-export const getMyPosts = async(req, res) => {
+export const getMyPosts = async(req, res, next) => {
   try {
     const posts = await Post.find({ author: req.user._id })
       .populate('author', 'name avatar')
@@ -124,14 +124,14 @@ export const getMyPosts = async(req, res) => {
 
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Follow/Unfollow user
 // @route   PUT /api/users/profile/follow/:id
 // @access  Private
-export const followUser = async (req, res) => {
+export const followUser = async (req, res, next) => {
   try {
     const currentUserId = req.user._id;
     const targetUserId = req.params.id;
@@ -167,6 +167,6 @@ export const followUser = async (req, res) => {
       currentUserFollowing: updatedCurrentUser.following,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };

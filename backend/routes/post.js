@@ -28,7 +28,7 @@ router.route('/search/:query').get(searchPosts);
 router
   .route('/:id')
   .get(getPost)
-  .put(protect, updatePost)
+  .put(protect, postValidation, updatePost)
   .delete(protect, deletePost);
 
 router.route('/:id/like').put(protect, likePost);
