@@ -9,7 +9,7 @@ import {
   Moon,
   Sun,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 
 const Navbar = ({ onSearch, showSearch = false }) => {
@@ -18,6 +18,8 @@ const Navbar = ({ onSearch, showSearch = false }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -31,161 +33,298 @@ const Navbar = ({ onSearch, showSearch = false }) => {
     }
   };
 
-  return (
-    <nav className="bg-white/97 dark:bg-[#0c0e14]/97 border-b border-gray-100 dark:border-white/[0.05] sticky top-0 z-50 backdrop-blur-md transition-colors duration-300 shadow-sm dark:shadow-black/40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-          {/* Logo */}
+  return (
+    <nav
+      className="sticky top-0 z-50 transition-colors duration-300"
+      style={{
+        backgroundColor: 'var(--dp-bg)',
+        borderBottom: '1px solid var(--dp-border)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        boxShadow: '0 1px 0 var(--dp-border)',
+      }}
+    >
+      <div style={{ maxWidth: '100%', padding: '0 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 'var(--dp-navbar-h)', gap: '16px' }}>
+
+          {/* ── Logo ── */}
           <Link
             to={user ? '/dashboard' : '/'}
-            className="text-xl font-sans font-black tracking-tight text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex-shrink-0"
+            style={{ display: 'flex', alignItems: 'center', gap: '1px', flexShrink: 0, textDecoration: 'none' }}
           >
-            DailyPen
+            <span
+              style={{
+                fontSize: '1.2rem',
+                fontWeight: 900,
+                letterSpacing: '-0.03em',
+                color: 'var(--dp-heading)',
+                fontFamily: 'var(--dp-font-display)',
+                transition: 'opacity 0.2s ease',
+              }}
+              onMouseEnter={e => e.currentTarget.parentElement.style.opacity = '0.72'}
+              onMouseLeave={e => e.currentTarget.parentElement.style.opacity = '1'}
+            >
+              Daily
+            </span>
+            <span
+              style={{
+                fontSize: '1.2rem',
+                fontWeight: 900,
+                letterSpacing: '-0.03em',
+                color: 'var(--dp-accent)',
+                fontFamily: 'var(--dp-font-display)',
+              }}
+            >
+              Pen
+            </span>
           </Link>
 
-          {/* Search Bar */}
+          {/* ── Search Bar ── */}
           {showSearch && (
-            <form onSubmit={handleSearch} className="flex-1 max-w-lg mx-4 sm:mx-8">
-              <div className="relative">
+            <form
+              onSubmit={handleSearch}
+              style={{ flex: 1, maxWidth: '480px', margin: '0 8px' }}
+            >
+              <div style={{ position: 'relative' }}>
+                <Search
+                  style={{
+                    position: 'absolute',
+                    left: '14px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '14px',
+                    height: '14px',
+                    pointerEvents: 'none',
+                    color: searchFocused ? 'var(--dp-accent)' : 'var(--dp-muted)',
+                    transition: 'color 0.2s ease',
+                  }}
+                />
                 <input
+                  id="navbar-search"
                   type="text"
-                  placeholder="Search stories..."
+                  placeholder="Search stories…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 pr-4
-                             border border-gray-200 dark:border-white/[0.07]
-                             rounded-full
-                             bg-gray-50 dark:bg-white/[0.05]
-                             text-gray-900 dark:text-white
-                             placeholder-gray-400 dark:placeholder-white/30
-                             text-sm
-                             focus:outline-none focus:ring-2
-                             focus:ring-gray-300 dark:focus:ring-amber-500/40
-                             focus:bg-white dark:focus:bg-white/[0.08]
-                             transition-all duration-200"
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  className="dp-search-field"
                 />
-                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-gray-400 dark:text-white/30" />
               </div>
             </form>
           )}
 
-          {/* Right Menu */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* ── Right Controls ── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
 
             {/* Theme Toggle */}
             <button
+              id="theme-toggle"
               onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.07] transition-colors"
               aria-label="Toggle theme"
+              style={{
+                padding: '8px',
+                borderRadius: '9999px',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: 'var(--dp-subtle)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--dp-s1)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
             >
               {theme === 'dark' ? (
-                <Sun className="h-4 w-4 text-amber-400" />
+                <Sun style={{ width: '16px', height: '16px', color: 'var(--dp-accent)' }} />
               ) : (
-                <Moon className="h-4 w-4 text-gray-500" />
+                <Moon style={{ width: '16px', height: '16px' }} />
               )}
             </button>
 
             {user ? (
               <>
-                {/* Write button */}
+                {/* Write CTA */}
                 <Link
                   to="/create-post"
-                  className="hidden sm:flex items-center space-x-1.5
-                             border border-gray-200 dark:border-white/[0.1]
-                             hover:bg-gray-50 dark:hover:bg-white/[0.07]
-                             px-4 py-1.5 rounded-full
-                             text-xs font-semibold
-                             text-gray-700 dark:text-white/80
-                             transition-all duration-200 shadow-sm"
+                  id="write-btn"
+                  className="dp-write-btn"
+                  style={{ display: window.innerWidth < 480 ? 'none' : undefined }}
                 >
-                  <PenSquare className="h-3.5 w-3.5" />
+                  <PenSquare style={{ width: '14px', height: '14px' }} />
                   <span>Write</span>
                 </Link>
 
-                {/* User dropdown */}
-                <div className="relative">
+                {/* User Dropdown */}
+                <div style={{ position: 'relative' }} ref={dropdownRef}>
                   <button
+                    id="user-avatar-btn"
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex items-center space-x-2
-                               hover:bg-gray-100 dark:hover:bg-white/[0.07]
-                               px-2.5 py-1.5 rounded-xl
-                               transition-colors duration-200"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '5px 8px 5px 5px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      color: 'var(--dp-body)',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--dp-s1)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     {user.avatar ? (
                       <img
                         src={user.avatar}
                         alt={user.name}
-                        className="h-7 w-7 rounded-full object-cover ring-2 ring-transparent hover:ring-gray-300 dark:hover:ring-white/20 transition-all"
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          flexShrink: 0,
+                          border: '2px solid',
+                          borderColor: showDropdown ? 'var(--dp-accent)' : 'var(--dp-s3)',
+                          transition: 'border-color 0.2s ease',
+                        }}
                       />
                     ) : (
-                      <div className="h-7 w-7 rounded-full bg-gray-800 dark:bg-dp-s3 flex items-center justify-center text-white font-bold text-xs">
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          background: 'linear-gradient(135deg, #e8a838, #f07b38)',
+                        }}
+                      >
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="hidden sm:inline text-sm font-medium text-gray-700 dark:text-white/90">
-                      {user.name}
+                    <span
+                      style={{
+                        fontSize: '0.83rem',
+                        fontWeight: 500,
+                        color: 'var(--dp-body)',
+                        display: window.innerWidth < 768 ? 'none' : undefined,
+                      }}
+                    >
+                      {user.name.split(' ')[0]}
                     </span>
                   </button>
 
+                  {/* Dropdown Menu */}
                   {showDropdown && (
                     <div
-                      className="absolute right-0 mt-2 w-52
-                                 bg-white dark:bg-[#161820]
-                                 rounded-xl shadow-xl dark:shadow-black/60
-                                 py-1.5 border border-gray-100 dark:border-white/[0.06]
-                                 backdrop-blur-md
-                                 animate-fadeIn"
+                      id="user-dropdown"
+                      className="animate-fadeIn"
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        marginTop: '10px',
+                        width: '220px',
+                        padding: '6px 0',
+                        borderRadius: '16px',
+                        backgroundColor: 'var(--dp-bg)',
+                        border: '1px solid var(--dp-border)',
+                        boxShadow: '0 16px 48px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+                        zIndex: 100,
+                      }}
                     >
                       {/* User info header */}
-                      <div className="px-4 py-2.5 border-b border-gray-100 dark:border-white/[0.05] mb-1">
-                        <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                      <div
+                        style={{
+                          padding: '12px 16px',
+                          borderBottom: '1px solid var(--dp-border)',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        <p style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--dp-heading)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {user.name}
                         </p>
-                        <p className="text-[10px] text-gray-400 dark:text-white/40 truncate mt-0.5">
+                        <p style={{ fontSize: '0.72rem', color: 'var(--dp-muted)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {user.email}
                         </p>
                       </div>
 
-                      <Link
-                        to={`/profile/${user._id}`}
-                        className="flex items-center space-x-2.5 px-4 py-2.5
-                                   text-sm text-gray-700 dark:text-white/80
-                                   hover:bg-gray-50 dark:hover:bg-white/[0.06]
-                                   transition-colors duration-150"
-                        onClick={() => setShowDropdown(false)}
-                      >
-                        <User className="h-4 w-4 text-gray-400 dark:text-white/40" />
-                        <span>Profile</span>
-                      </Link>
-
-                      {user.role === 'admin' && (
+                      {[
+                        {
+                          to: `/profile/${user._id}`,
+                          icon: <User style={{ width: '15px', height: '15px', color: 'var(--dp-muted)' }} />,
+                          label: 'My Profile',
+                          show: true,
+                        },
+                        {
+                          to: '/admin',
+                          icon: <Shield style={{ width: '15px', height: '15px', color: '#7c3aed' }} />,
+                          label: 'Admin Panel',
+                          show: user.role === 'admin',
+                        },
+                      ].filter(i => i.show).map(item => (
                         <Link
-                          to="/admin"
-                          className="flex items-center space-x-2.5 px-4 py-2.5
-                                     text-sm text-gray-700 dark:text-white/80
-                                     hover:bg-gray-50 dark:hover:bg-white/[0.06]
-                                     transition-colors duration-150"
+                          key={item.label}
+                          to={item.to}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '9px 16px',
+                            fontSize: '0.84rem',
+                            color: 'var(--dp-body)',
+                            textDecoration: 'none',
+                            transition: 'background-color 0.15s ease',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--dp-s1)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                           onClick={() => setShowDropdown(false)}
                         >
-                          <Shield className="h-4 w-4 text-violet-400" />
-                          <span>Admin Panel</span>
+                          {item.icon}
+                          <span>{item.label}</span>
                         </Link>
-                      )}
+                      ))}
 
-                      <div className="border-t border-gray-100 dark:border-white/[0.05] mt-1 pt-1">
+                      <div style={{ borderTop: '1px solid var(--dp-border)', marginTop: '4px', paddingTop: '4px' }}>
                         <button
                           onClick={() => {
                             setShowDropdown(false);
                             handleLogout();
                           }}
-                          className="flex items-center space-x-2.5 px-4 py-2.5
-                                     text-sm text-red-500 dark:text-red-400
-                                     hover:bg-red-50 dark:hover:bg-red-500/[0.08]
-                                     transition-colors duration-150 w-full text-left"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '9px 16px',
+                            fontSize: '0.84rem',
+                            color: 'rgb(239,68,68)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            width: '100%',
+                            textAlign: 'left',
+                            transition: 'background-color 0.15s ease',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.06)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
-                          <LogOut className="h-4 w-4" />
-                          <span>Logout</span>
+                          <LogOut style={{ width: '15px', height: '15px' }} />
+                          <span>Log out</span>
                         </button>
                       </div>
                     </div>
@@ -196,16 +335,24 @@ const Navbar = ({ onSearch, showSearch = false }) => {
               <>
                 <Link
                   to="/login"
-                  className="text-sm text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
+                  style={{
+                    fontSize: '0.84rem',
+                    fontWeight: 500,
+                    color: 'var(--dp-subtle)',
+                    textDecoration: 'none',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    transition: 'color 0.2s ease',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--dp-heading)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--dp-subtle)'}
                 >
-                  Log in
+                  Sign in
                 </Link>
                 <Link
                   to="/signup"
-                  className="bg-gray-900 dark:bg-amber-500 text-white dark:text-gray-950
-                             px-4 py-2 rounded-lg text-sm
-                             hover:bg-gray-800 dark:hover:bg-amber-400
-                             transition-colors font-semibold shadow-sm"
+                  id="get-started-btn"
+                  className="dp-write-btn"
                 >
                   Get started
                 </Link>

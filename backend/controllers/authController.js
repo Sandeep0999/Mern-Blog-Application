@@ -177,17 +177,22 @@ export const login = async (req, res) => {
     console.log('LOGIN OTP HASH:', otpHash);
     console.log('OTP EXPIRES AT:', user.otpExpiresAt);
 
-    // ✉️ Send email
-    await sendEmail({
-      to: user.email,
-      subject: 'Your DailyPen Login OTP',
-      html: `
-        <h2>Login Verification</h2>
-        <p>Your OTP is:</p>
-        <h1>${otp}</h1>
-        <p>This code expires in 5 minutes.</p>
-      `,
-    });
+    // ✉️ Send email (non-fatal — OTP is also logged to console in dev)
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Your DailyPen Login OTP',
+        html: `
+          <h2>Login Verification</h2>
+          <p>Your OTP is:</p>
+          <h1>${otp}</h1>
+          <p>This code expires in 5 minutes.</p>
+        `,
+      });
+    } catch (emailErr) {
+      console.error('LOGIN EMAIL ERROR (non-fatal):', emailErr.message);
+      // Continue — OTP is logged to console and still works
+    }
 
     res.json({
       message: 'OTP sent to your email',

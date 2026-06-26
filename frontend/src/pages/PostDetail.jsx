@@ -18,9 +18,11 @@ import {
   AlertTriangle,
   ArrowLeft,
   Calendar,
-  Sparkles
+  Sparkles,
+  Flag,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import ReportModal from '../components/ReportModal';
 
 const PostDetail = () => {
   const { id } = useParams();
@@ -38,6 +40,7 @@ const PostDetail = () => {
   const [deleteType, setDeleteType] = useState(null); // 'post' or 'comment'
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   // Derived follow state from synced Auth context
   const followedWriters = user?.following || [];
@@ -340,6 +343,18 @@ const PostDetail = () => {
                 >
                   <Bookmark className={`h-5 w-5 hover:scale-110 transition-transform ${isSaved ? 'fill-current' : ''}`} />
                 </button>
+
+                {/* Report button — only for logged-in non-authors */}
+                {user && user._id !== post.author._id && (
+                  <button
+                    onClick={() => setReportOpen(true)}
+                    className="text-xs font-semibold text-gray-400 dark:text-[#555d74] hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200"
+                    aria-label="Report post"
+                    title="Report this post"
+                  >
+                    <Flag className="h-5 w-5 hover:scale-110 transition-transform" />
+                  </button>
+                )}
               </div>
 
               {/* Author triggers (Edit/Delete) */}
@@ -592,6 +607,16 @@ const PostDetail = () => {
       )}
 
       <Footer />
+
+      {/* Report Modal */}
+      {post && (
+        <ReportModal
+          postId={post._id}
+          postTitle={post.title}
+          isOpen={reportOpen}
+          onClose={() => setReportOpen(false)}
+        />
+      )}
     </div>
   );
 };

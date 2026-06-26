@@ -15,6 +15,7 @@ import postRoutes from './routes/post.js';
 import userRoutes from './routes/user.js';
 import adminRoutes from './routes/admin.js';
 import aiRoutes from './routes/ai.js';
+import reportRoutes from './routes/report.js';
 
 dotenv.config();
 
@@ -43,6 +44,13 @@ const authLimiter = rateLimit({
   message: 'Too many authentication attempts from this IP, please try again later.',
 });
 
+// Report submission rate limiter — prevent spam reporting
+const reportLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // max 10 reports per 15 minutes per IP
+  message: 'Too many reports submitted. Please wait before reporting again.',
+});
+
 // Body parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -65,6 +73,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/reports', reportLimiter, reportRoutes);
 
 // Health check (verifies Node server status + active database connection)
 app.get('/api/health', (req, res) => {

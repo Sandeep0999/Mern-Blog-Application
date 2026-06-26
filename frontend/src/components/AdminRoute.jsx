@@ -12,7 +12,8 @@ const AdminRoute = ({ children }) => {
     );
   }
 
-  return user && user.role === 'admin' ? children : <Navigate to="/dashboard" replace />;
+  const STAFF_ROLES = ['admin', 'moderator', 'content_reviewer', 'support_admin'];
+  return user && STAFF_ROLES.includes(user.role) ? children : <Navigate to="/dashboard" replace />;
 };
 
 export default AdminRoute;

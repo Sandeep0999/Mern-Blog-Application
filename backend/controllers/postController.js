@@ -30,16 +30,32 @@ export const getPosts = async (req, res, next) => {
         break;
     }
 
-    const posts = await Post.find()
-      .populate('author', 'name avatar')
+    // Filter: include published posts AND legacy posts that have no status field yet
+    const statusFilter = {
+      $or: [
+        { status: { $in: ['published', 'flagged'] } },
+        { status: { $exists: false } },
+      ],
+    };
+
+    const posts = await Post.find(statusFilter)
+      .populate({
+        path: 'author',
+        select: 'name avatar isShadowBanned status',
+        // Include active users AND legacy users with no status field yet
+        match: { $or: [{ status: { $in: ['active', 'shadow_banned'] } }, { status: { $exists: false } }] },
+      })
       .sort(sortOption)
       .skip(skip)
       .limit(limit);
 
-    const total = await Post.countDocuments();
+    // Filter out posts whose author populated as null (banned users)
+    const filteredPosts = posts.filter(p => p.author !== null);
+
+    const total = await Post.countDocuments(statusFilter);
 
     res.json({
-      posts,
+      posts: filteredPosts,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,

@@ -1,38 +1,534 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PostCard from '../components/PostCard';
 import API, { isSilentError } from '../api/axios';
 import { toast } from 'react-toastify';
-import { 
-  Loader2, 
-  TrendingUp, 
-  Clock, 
-  Heart, 
-  MessageCircle, 
-  Home, 
-  Bookmark, 
-  Users, 
-  PenSquare, 
-  User, 
-  Shield, 
-  BookOpen, 
-  Hash,
-  ArrowRight,
+import {
+  Loader2,
+  TrendingUp,
+  Clock,
+  Heart,
+  MessageCircle,
+  Home,
+  Bookmark,
+  Users,
+  PenSquare,
+  User,
+  Shield,
+  BookOpen,
   Mail,
-  Sparkles,
-  Search,
-  Plus,
-  Check
+  Star,
+  Sun,
+  Moon,
+  LogOut,
+  Menu,
+  X,
+  ChevronLeft,
+  Settings,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
+/* ─────────────────────────────────────────
+   Time-based greeting
+   ───────────────────────────────────────── */
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+};
+
+/* ─────────────────────────────────────────
+   Avatar gradient helper
+   ───────────────────────────────────────── */
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg,#e8a838,#f07b38)',
+  'linear-gradient(135deg,#7c6ef5,#5b4de8)',
+  'linear-gradient(135deg,#34d399,#059669)',
+  'linear-gradient(135deg,#60a5fa,#2563eb)',
+  'linear-gradient(135deg,#f472b6,#db2777)',
+];
+const avatarGrad = (name = '') =>
+  AVATAR_GRADIENTS[name.charCodeAt(0) % AVATAR_GRADIENTS.length];
+
+/* ═══════════════════════════════════════════════════════
+   LEFT SIDEBAR COMPONENT
+   ═══════════════════════════════════════════════════════ */
+const Sidebar = ({
+  expanded,
+  onToggle,
+  activeTab,
+  selectedTag,
+  searchQuery,
+  onTabChange,
+  user,
+  theme,
+  onToggleTheme,
+  onLogout,
+}) => {
+  const navItems = [
+    { id: 'for-you',   icon: Home,     label: 'For You'   },
+    { id: 'following', icon: Users,    label: 'Following' },
+    { id: 'featured',  icon: Star,     label: 'Featured'  },
+    { id: 'bookmarks', icon: Bookmark, label: 'Saved'     },
+  ];
+
+  const isActive = (id) =>
+    activeTab === id && !selectedTag && !searchQuery;
+
+  return (
+    <aside
+      id="main-sidebar"
+      className="dp-left-sidebar"
+      style={{
+        width: expanded ? 'var(--dp-sidebar-w)' : 'var(--dp-sidebar-col-w)',
+        minWidth: expanded ? 'var(--dp-sidebar-w)' : 'var(--dp-sidebar-col-w)',
+      }}
+    >
+      {/* ── Inner scroll container ── */}
+      <div
+        className="dp-left-sidebar-inner scrollbar-none"
+        style={{
+          padding: expanded ? '20px 12px 20px 12px' : '20px 8px 20px 8px',
+          transition: 'padding 0.28s ease',
+        }}
+      >
+
+        {/* ── Collapse / Expand toggle ── */}
+        <button
+          id="sidebar-toggle"
+          onClick={onToggle}
+          aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: expanded ? 'flex-end' : 'center',
+            padding: '6px',
+            borderRadius: '8px',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            color: 'var(--dp-muted)',
+            transition: 'background 0.18s ease, color 0.18s ease, justify-content 0.28s ease',
+            marginBottom: '14px',
+            flexShrink: 0,
+            width: '100%',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.backgroundColor = 'var(--dp-s1)';
+            e.currentTarget.style.color = 'var(--dp-body)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--dp-muted)';
+          }}
+        >
+          <ChevronLeft
+            style={{
+              width: '16px',
+              height: '16px',
+              transition: 'transform 0.28s ease',
+              transform: expanded ? 'rotate(0deg)' : 'rotate(180deg)',
+              flexShrink: 0,
+            }}
+          />
+        </button>
+
+        {/* ── Write CTA ── */}
+        <Link
+          to="/create-post"
+          id="sidebar-write"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '9px 12px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg,var(--dp-accent),#f07b38)',
+            color: '#fff',
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            marginBottom: '18px',
+            textDecoration: 'none',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px var(--dp-accent-glow)',
+            transition: 'all 0.22s ease',
+            justifyContent: expanded ? 'flex-start' : 'center',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.filter = 'brightness(1.08)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.filter = 'brightness(1)';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          <PenSquare style={{ width: '15px', height: '15px', flexShrink: 0 }} />
+          {expanded && <span>New Story</span>}
+        </Link>
+
+        {/* ── Reading section label ── */}
+        {expanded && (
+          <p className="sidebar-section-label">Reading</p>
+        )}
+
+        {/* ── Nav items ── */}
+        {navItems.map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            id={`sidebar-${id}`}
+            onClick={() => onTabChange(id)}
+            title={!expanded ? label : undefined}
+            className={`sidebar-nav-item${isActive(id) ? ' active' : ''}`}
+            style={{
+              justifyContent: expanded ? 'flex-start' : 'center',
+            }}
+          >
+            <Icon style={{ width: '17px', height: '17px', flexShrink: 0 }} />
+            {expanded && <span>{label}</span>}
+          </button>
+        ))}
+
+        {/* ── Account section ── */}
+        {expanded && (
+          <p className="sidebar-section-label" style={{ marginTop: '20px' }}>
+            Account
+          </p>
+        )}
+        {!expanded && (
+          <div style={{ height: '16px', flexShrink: 0 }} />
+        )}
+
+        {/* Profile */}
+        {user && (
+          <Link
+            to={`/profile/${user._id}`}
+            id="sidebar-profile"
+            title={!expanded ? 'Profile' : undefined}
+            className="sidebar-nav-item"
+            style={{
+              justifyContent: expanded ? 'flex-start' : 'center',
+            }}
+          >
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                  border: '1.5px solid var(--dp-s3)',
+                }}
+              />
+            ) : (
+              <User style={{ width: '17px', height: '17px', flexShrink: 0 }} />
+            )}
+            {expanded && <span>Profile</span>}
+          </Link>
+        )}
+
+        {/* Admin */}
+        {user?.role === 'admin' && (
+          <Link
+            to="/admin"
+            id="sidebar-admin"
+            title={!expanded ? 'Admin' : undefined}
+            className="sidebar-nav-item"
+            style={{
+              justifyContent: expanded ? 'flex-start' : 'center',
+              color: 'rgb(239,68,68)',
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.07)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <Shield style={{ width: '17px', height: '17px', flexShrink: 0 }} />
+            {expanded && <span>Admin</span>}
+          </Link>
+        )}
+
+        {/* ── Spacer ── */}
+        <div style={{ flex: 1 }} />
+
+        {/* ── Theme + Logout utility row ── */}
+        <div
+          style={{
+            borderTop: '1px solid var(--dp-border)',
+            paddingTop: '12px',
+            marginTop: '8px',
+            display: 'flex',
+            flexDirection: expanded ? 'row' : 'column',
+            gap: '6px',
+            alignItems: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <button
+            id="sidebar-theme"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            aria-label="Toggle theme"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '7px 10px',
+              borderRadius: '9px',
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--dp-subtle)',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              flex: expanded ? 1 : undefined,
+              transition: 'all 0.18s ease',
+              justifyContent: 'center',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = 'var(--dp-s1)';
+              e.currentTarget.style.color = 'var(--dp-body)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--dp-subtle)';
+            }}
+          >
+            {theme === 'dark'
+              ? <Sun style={{ width: '15px', height: '15px', color: 'var(--dp-accent)', flexShrink: 0 }} />
+              : <Moon style={{ width: '15px', height: '15px', flexShrink: 0 }} />
+            }
+            {expanded && <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>}
+          </button>
+
+          {user && (
+            <button
+              id="sidebar-logout"
+              onClick={onLogout}
+              title="Log out"
+              aria-label="Log out"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '7px 10px',
+                borderRadius: '9px',
+                border: 'none',
+                background: 'transparent',
+                color: 'rgb(239,68,68)',
+                cursor: 'pointer',
+                transition: 'all 0.18s ease',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <LogOut style={{ width: '15px', height: '15px', flexShrink: 0 }} />
+            </button>
+          )}
+        </div>
+
+        {/* DailyPen label */}
+        {expanded && (
+          <p
+            style={{
+              fontSize: '0.6rem',
+              color: 'var(--dp-muted)',
+              padding: '8px 4px 0',
+              fontWeight: 500,
+              flexShrink: 0,
+            }}
+          >
+            DailyPen · 2026
+          </p>
+        )}
+      </div>
+    </aside>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   RIGHT SIDEBAR / WIDGETS COMPONENT
+   ═══════════════════════════════════════════════════════ */
+const RightSidebar = ({
+  suggestedWriters,
+  topTags,
+  featuredPosts,
+  selectedTag,
+  followedWriters,
+  onFollowToggle,
+  onTagClick,
+  onClearFilters,
+}) => (
+  <aside
+    id="right-sidebar"
+    className="dp-right-panel scrollbar-none"
+  >
+    {/* ── Suggested Writers ── */}
+    {suggestedWriters.length > 0 && (
+      <div className="widget-card">
+        <p className="widget-header">Suggested Writers</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          {suggestedWriters.slice(0, 4).map((writer) => {
+            const isFollowing = followedWriters.includes(writer._id);
+            return (
+              <div key={writer._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', minWidth: 0 }}>
+                <Link
+                  to={`/profile/${writer._id}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, textDecoration: 'none', flex: 1 }}
+                >
+                  {writer.avatar ? (
+                    <img
+                      src={writer.avatar}
+                      alt={writer.name}
+                      style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid var(--dp-s2)' }}
+                    />
+                  ) : (
+                    <div
+                      style={{ width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '0.95rem', background: avatarGrad(writer.name) }}
+                    >
+                      {writer.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--dp-heading)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {writer.name}
+                    </p>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--dp-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+                      {writer.bio || 'Writer on DailyPen'}
+                    </p>
+                  </div>
+                </Link>
+                <button
+                  onClick={() => onFollowToggle(writer._id)}
+                  className={isFollowing ? 'dp-follow-btn-active' : 'dp-follow-btn'}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    {/* ── Trending Tags ── */}
+    {topTags.length > 0 && (
+      <div className="widget-card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <p className="widget-header" style={{ marginBottom: 0 }}>Trending Tags</p>
+          {selectedTag && (
+            <button
+              onClick={onClearFilters}
+              style={{ fontSize: '0.68rem', fontWeight: 500, color: 'var(--dp-muted)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.18s ease' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--dp-body)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--dp-muted)'}
+            >
+              View all
+            </button>
+          )}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {topTags.map((tag) => (
+            <button
+              key={tag}
+              id={`tag-${tag}`}
+              onClick={() => onTagClick(tag)}
+              className={selectedTag === tag ? 'tag-pill-active' : 'tag-pill'}
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* ── Popular Reads ── */}
+    {featuredPosts.length > 0 && (
+      <div className="widget-card">
+        <p className="widget-header">Popular Reads</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {featuredPosts.slice(0, 3).map((post, idx) => (
+            <div key={post._id} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', minWidth: 0 }}>
+              <span className="popular-num">{idx + 1}</span>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <Link
+                  to={`/profile/${post.author?._id}`}
+                  style={{ display: 'block', fontSize: '0.68rem', fontWeight: 600, color: 'var(--dp-muted)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px', transition: 'color 0.18s ease' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--dp-body)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--dp-muted)'}
+                >
+                  {post.author?.name}
+                </Link>
+                <Link
+                  to={`/post/${post._id}`}
+                  style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--dp-heading)', textDecoration: 'none', lineHeight: 1.42, letterSpacing: '-0.01em', transition: 'color 0.18s ease' }}
+                  className="line-clamp-2"
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--dp-accent)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--dp-heading)'}
+                >
+                  {post.title}
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* Footer note */}
+    <p style={{ fontSize: '0.6rem', color: 'var(--dp-muted)', padding: '0 4px', fontWeight: 500 }}>
+      DailyPen · © 2026
+    </p>
+  </aside>
+);
+
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD — Main Component
+   ═══════════════════════════════════════════════════════ */
 const Dashboard = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  
-  // Existing feed states
+
+  // ── Sidebar state — persisted in localStorage ──
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => {
+    try { return localStorage.getItem('dp_sidebar') !== 'collapsed'; }
+    catch { return true; }
+  });
+
+  // ── Mobile drawer state ──
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const overlayRef = useRef(null);
+
+  const toggleSidebar = () => {
+    setSidebarExpanded(prev => {
+      const next = !prev;
+      try { localStorage.setItem('dp_sidebar', next ? 'expanded' : 'collapsed'); }
+      catch {}
+      return next;
+    });
+  };
+
+  // Close mobile drawer on resize
+  useEffect(() => {
+    const handler = () => {
+      if (window.innerWidth >= 768) setMobileOpen(false);
+    };
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  // ── Feed state ──
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -42,66 +538,58 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-
-  // New Medium-inspired states
-  const [activeTab, setActiveTab] = useState('for-you'); // 'for-you', 'following', 'featured', 'bookmarks'
+  const [activeTab, setActiveTab] = useState('for-you');
   const [selectedTag, setSelectedTag] = useState('');
   const [featuredPosts, setFeaturedPosts] = useState([]);
-  
-  // Derived follow state from synced Auth context
+
   const followedWriters = user?.following || [];
 
-  // ── EFFECT 1: Fetch posts when filter or tab changes ──
-  // Uses AbortController so previous in-flight requests are cancelled.
+  const handleLogout = () => { logout(); navigate('/'); };
+
+  // ── EFFECTS ──
   useEffect(() => {
     if (activeTab !== 'for-you') return;
     const controller = new AbortController();
     fetchPosts(1, controller.signal);
     return () => controller.abort();
-  }, [activeFilter, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeFilter, activeTab]); // eslint-disable-line
 
-  // ── EFFECT 2: Fetch saved posts once when user is available ──
   useEffect(() => {
     if (!user) return;
     const controller = new AbortController();
     fetchSavedPosts(controller.signal);
     return () => controller.abort();
-  }, [user?._id]); // re-run only if user identity changes
+  }, [user?._id]); // eslint-disable-line
 
-  // ── EFFECT 3: Fetch featured posts once on mount ──
   useEffect(() => {
     const controller = new AbortController();
-    const fetchFeatured = async () => {
+    (async () => {
       try {
         const { data } = await API.get('/posts/featured', { signal: controller.signal });
         setFeaturedPosts(data);
       } catch (err) {
-        if (!isSilentError(err)) console.error('Failed to fetch featured posts:', err.message);
+        if (!isSilentError(err)) console.error(err.message);
       }
-    };
-    fetchFeatured();
+    })();
     return () => controller.abort();
   }, []);
 
-
+  // ── API FUNCTIONS ──
   const fetchPosts = async (page = 1, signal) => {
     try {
       if (page === 1) setLoading(true);
       else setLoadingMore(true);
-
       const { data } = await API.get(
         `/posts?sortBy=${activeFilter}&page=${page}&limit=9`,
         { signal }
       );
-
       if (page === 1) setPosts(data.posts);
       else setPosts(prev => [...prev, ...data.posts]);
-
       setCurrentPage(data.currentPage);
       setTotalPages(data.totalPages);
       setHasMore(data.currentPage < data.totalPages);
     } catch (error) {
-      if (isSilentError(error)) return; // AbortError or AuthError — stay silent
+      if (isSilentError(error)) return;
       toast.error('Failed to fetch posts', { toastId: 'fetch-posts-error' });
     } finally {
       setLoading(false);
@@ -112,38 +600,25 @@ const Dashboard = () => {
   const fetchSavedPosts = async (signal) => {
     try {
       const { data } = await API.get('/users/saved', { signal });
-      setSavedPosts(data.map(post => post._id));
+      setSavedPosts(data.map(p => p._id));
     } catch (error) {
-      if (!isSilentError(error)) {
-        console.error('Failed to fetch saved posts:', error.message);
-      }
+      if (!isSilentError(error)) console.error(error.message);
     }
   };
 
   const handleSearch = async (query) => {
-    if (!query.trim()) {
-      setSearchQuery('');
-      setSelectedTag('');
-      setActiveTab('for-you');
-      setCurrentPage(1);
-      fetchPosts(1);
-      return;
-    }
-
+    if (!query.trim()) { setSearchQuery(''); setSelectedTag(''); setActiveTab('for-you'); setCurrentPage(1); fetchPosts(1); return; }
     setSearchQuery(query);
     setSelectedTag('');
     setActiveTab('for-you');
     setLoading(true);
-
     try {
       const { data } = await API.get(`/posts/search/${query}`);
       setPosts(data);
       setHasMore(false);
     } catch (error) {
       if (!isSilentError(error)) toast.error('Search failed', { toastId: 'search-error' });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleFilterChange = (filter) => {
@@ -154,20 +629,14 @@ const Dashboard = () => {
     setLoading(true);
   };
 
-  const handleLoadMore = () => {
-    const nextPage = currentPage + 1;
-    fetchPosts(nextPage);
-  };
+  const handleLoadMore = () => fetchPosts(currentPage + 1);
 
   const handleLike = async (postId) => {
     try {
       const { data } = await API.put(`/posts/${postId}/like`);
-      setPosts(posts.map(post =>
-        post._id === postId ? { ...post, likesCount: data.likesCount, likes: data.likes } : post
-      ));
-      setFeaturedPosts(featuredPosts.map(post =>
-        post._id === postId ? { ...post, likesCount: data.likesCount, likes: data.likes } : post
-      ));
+      const update = p => p._id === postId ? { ...p, likesCount: data.likesCount, likes: data.likes } : p;
+      setPosts(ps => ps.map(update));
+      setFeaturedPosts(ps => ps.map(update));
     } catch (error) {
       if (!isSilentError(error)) toast.error('Failed to like post', { toastId: 'like-error' });
     }
@@ -177,13 +646,8 @@ const Dashboard = () => {
     try {
       const { data } = await API.put(`/users/save/${postId}`);
       setSavedPosts(data.savedPosts);
-      toast.success(
-        savedPosts.includes(postId) ? 'Post removed from Bookmarks' : 'Post saved to Bookmarks',
-        { toastId: `save-${postId}` }
-      );
-      if (activeTab === 'bookmarks') {
-        setPosts(prev => prev.filter(post => post._id !== postId));
-      }
+      toast.success(savedPosts.includes(postId) ? 'Removed from Bookmarks' : 'Saved to Bookmarks', { toastId: `save-${postId}` });
+      if (activeTab === 'bookmarks') setPosts(prev => prev.filter(p => p._id !== postId));
     } catch (error) {
       if (!isSilentError(error)) toast.error('Failed to save post', { toastId: 'save-error' });
     }
@@ -193,13 +657,9 @@ const Dashboard = () => {
     try {
       const { data } = await API.put(`/users/profile/follow/${authorId}`);
       updateUser({ following: data.currentUserFollowing });
-      toast.success(data.isFollowing ? 'Author followed' : 'Unfollowed author', {
-        toastId: `follow-toggle-${authorId}`,
-      });
+      toast.success(data.isFollowing ? 'Author followed' : 'Unfollowed author', { toastId: `follow-${authorId}` });
     } catch (error) {
-      if (!isSilentError(error)) {
-        toast.error(error.response?.data?.message || 'Failed to toggle follow status');
-      }
+      if (!isSilentError(error)) toast.error(error.response?.data?.message || 'Failed to toggle follow');
     }
   };
 
@@ -213,16 +673,15 @@ const Dashboard = () => {
       setPosts(data);
       setHasMore(false);
     } catch (error) {
-      if (!isSilentError(error)) toast.error('Failed to load posts for tag', { toastId: 'tag-error' });
-    } finally {
-      setLoading(false);
-    }
+      if (!isSilentError(error)) toast.error('Failed to load tag posts', { toastId: 'tag-error' });
+    } finally { setLoading(false); }
   };
 
   const handleTabChange = async (tab) => {
     setActiveTab(tab);
     setSelectedTag('');
     setSearchQuery('');
+    setMobileOpen(false);
 
     if (tab === 'for-you') {
       setCurrentPage(1);
@@ -234,10 +693,8 @@ const Dashboard = () => {
         setPosts(data);
         setHasMore(false);
       } catch (err) {
-        if (!isSilentError(err)) toast.error('Failed to load featured posts', { toastId: 'featured-error' });
-      } finally {
-        setLoading(false);
-      }
+        if (!isSilentError(err)) toast.error('Failed to load featured', { toastId: 'featured-error' });
+      } finally { setLoading(false); }
     } else if (tab === 'bookmarks') {
       setLoading(true);
       try {
@@ -245,10 +702,8 @@ const Dashboard = () => {
         setPosts(data);
         setHasMore(false);
       } catch (err) {
-        if (!isSilentError(err)) toast.error('Failed to load saved posts', { toastId: 'saved-error' });
-      } finally {
-        setLoading(false);
-      }
+        if (!isSilentError(err)) toast.error('Failed to load saved', { toastId: 'saved-error' });
+      } finally { setLoading(false); }
     }
   };
 
@@ -260,557 +715,495 @@ const Dashboard = () => {
     fetchPosts(1);
   };
 
-  // Derive unique suggested writers from current posts
+  // ── DERIVED DATA ──
   const suggestedWriters = [];
-  const seenWriters = new Set();
+  const seenW = new Set();
   posts.forEach(post => {
-    if (post.author && post.author._id !== user?._id && !seenWriters.has(post.author._id)) {
-      seenWriters.add(post.author._id);
+    if (post.author && post.author._id !== user?._id && !seenW.has(post.author._id)) {
+      seenW.add(post.author._id);
       suggestedWriters.push(post.author);
     }
   });
 
-  // Derive top tags from loaded posts
   const tagCounts = {};
-  posts.forEach(post => {
-    if (post.tags) {
-      post.tags.forEach(tag => {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-      });
-    }
-  });
-  const topTags = Object.keys(tagCounts)
-    .sort((a, b) => tagCounts[b] - tagCounts[a])
-    .slice(0, 6);
+  posts.forEach(post => post.tags?.forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+  const topTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]).slice(0, 8);
 
-  // Filter posts if Following tab is active
-  const displayedPosts = activeTab === 'following' 
-    ? posts.filter(post => post.author && followedWriters.includes(post.author._id))
+  const displayedPosts = activeTab === 'following'
+    ? posts.filter(p => p.author && followedWriters.includes(p.author._id))
     : posts;
 
   const sortingFilters = [
-    { id: 'recent', label: 'Most Recent', icon: Clock },
-    { id: 'liked', label: 'Most Liked', icon: Heart },
-    { id: 'commented', label: 'Most Commented', icon: MessageCircle },
-    { id: 'oldest', label: 'Oldest', icon: TrendingUp },
+    { id: 'recent',    label: 'Recent',        icon: Clock },
+    { id: 'liked',     label: 'Most Liked',    icon: Heart },
+    { id: 'commented', label: 'Top Discussed', icon: MessageCircle },
+    { id: 'oldest',    label: 'Oldest',        icon: TrendingUp },
   ];
 
-  if (loading) {
+  const feedTitle =
+    searchQuery ? `"${searchQuery}"`
+    : selectedTag ? `#${selectedTag}`
+    : activeTab === 'for-you'   ? 'For You'
+    : activeTab === 'following' ? 'Following'
+    : activeTab === 'bookmarks' ? 'Saved'
+    : activeTab === 'featured'  ? 'Featured'
+    : 'Stories';
+
+  const feedSub =
+    !searchQuery && !selectedTag && activeTab !== 'for-you'
+      ? activeTab === 'following' ? 'Stories from writers you follow'
+        : activeTab === 'bookmarks' ? 'Articles you have saved'
+        : activeTab === 'featured'  ? "Editor's picks and top stories"
+        : null
+      : null;
+
+  /* ── SIDEBAR SHARED PROPS ── */
+  const sidebarProps = {
+    activeTab,
+    selectedTag,
+    searchQuery,
+    onTabChange: handleTabChange,
+    user,
+    theme,
+    onToggleTheme: toggleTheme,
+    onLogout: handleLogout,
+  };
+
+  /* ── LOADING SCREEN ── */
+  if (loading && posts.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300">
+      <div className="dp-page">
         <Navbar showSearch onSearch={handleSearch} />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center space-y-4">
-            <Loader2 className="h-9 w-9 animate-spin text-gray-400 dark:text-amber-400" />
-            <p className="text-sm font-medium text-gray-400 dark:text-[#555d74]">Loading your reading feed...</p>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+            <Loader2 className="animate-spin" style={{ width: '32px', height: '32px', color: 'var(--dp-accent)' }} />
+            <p style={{ fontSize: '0.875rem', color: 'var(--dp-muted)', fontWeight: 500 }}>
+              Loading your reading feed…
+            </p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
+  /* ── MAIN RENDER ── */
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0c0e14] transition-colors duration-300">
+    <div className="dp-page">
+
+      {/* ── NAVBAR ── */}
       <Navbar showSearch onSearch={handleSearch} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-10 items-start">
-          
-          {/* ================= LEFT SIDEBAR (STICKY NAVIGATION) ================= */}
-          <aside className="hidden md:flex md:col-span-3 lg:col-span-2 flex-col space-y-1 sticky top-24 self-start border-r border-gray-100 dark:border-white/[0.04] pr-4 xl:pr-6">
-            <button 
-              onClick={() => handleTabChange('for-you')}
-              className={activeTab === 'for-you' && !selectedTag && !searchQuery ? 'sidebar-link-active' : 'sidebar-link'}
+      {/* ─────────────────────────────────────────────────
+          LAYOUT SHELL — flex row below navbar
+          NO overflow:hidden here — page scroll must be native
+          This is the critical fix for sticky behavior
+          ───────────────────────────────────────────────── */}
+      <div className="dp-layout-shell">
+
+        {/* ── DESKTOP SIDEBAR ── */}
+        <div className="hidden-mobile">
+          <Sidebar
+            expanded={sidebarExpanded}
+            onToggle={toggleSidebar}
+            {...sidebarProps}
+          />
+        </div>
+
+        {/* ── MOBILE OVERLAY ── */}
+        {mobileOpen && (
+          <div
+            ref={overlayRef}
+            onClick={() => setMobileOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.45)',
+              zIndex: 50,
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+            }}
+          />
+        )}
+
+        {/* ── MOBILE DRAWER SIDEBAR ── */}
+        <div
+          className="mobile-drawer"
+          style={{
+            transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+            position: 'fixed',
+            top: '68px',
+            left: 0,
+            bottom: 0,
+            zIndex: 51,
+            width: '260px',
+            boxShadow: mobileOpen ? '4px 0 32px rgba(0,0,0,0.18)' : 'none',
+          }}
+        >
+          <Sidebar
+            expanded={true}
+            onToggle={() => setMobileOpen(false)}
+            {...sidebarProps}
+          />
+        </div>
+
+        {/* ─────────────────────────────────────────────────
+            CONTENT AREA — feed + right sidebar
+            Natural page scroll, no overflow tricks
+            ───────────────────────────────────────────────── */}
+        <div className="dp-content-area">
+          <div className="dp-content-inner">
+
+            {/* ═══════════════════════════════════
+                CENTER FEED — reading-first layout
+                ═══════════════════════════════════ */}
+            <main
+              id="feed-main"
+              className="dp-feed-main"
             >
-              <Home className="h-5 w-5" />
-              <span>Home</span>
-            </button>
 
-            <button 
-              onClick={() => handleTabChange('bookmarks')}
-              className={activeTab === 'bookmarks' ? 'sidebar-link-active' : 'sidebar-link'}
-            >
-              <Bookmark className="h-5 w-5" />
-              <span>Saved</span>
-            </button>
-
-            <button 
-              onClick={() => setActiveTab('following')}
-              className={activeTab === 'following' ? 'sidebar-link-active' : 'sidebar-link'}
-            >
-              <Users className="h-5 w-5" />
-              <span>Following</span>
-            </button>
-
-            <Link to="/create-post" className="sidebar-link">
-              <PenSquare className="h-5 w-5" />
-              <span>Write</span>
-            </Link>
-
-            {user && (
-              <Link to={`/profile/${user._id}`} className="sidebar-link">
-                <User className="h-5 w-5" />
-                <span>Profile</span>
-              </Link>
-            )}
-
-            {user?.role === 'admin' && (
-              <Link to="/admin" className="sidebar-link !text-red-500 dark:!text-red-400">
-                <Shield className="h-5 w-5" />
-                <span>Admin</span>
-              </Link>
-            )}
-
-            {/* Sidebar footer hint */}
-            <div className="pt-4 mt-2 border-t border-gray-100 dark:border-white/[0.04]">
-              <p className="px-4 text-[10px] text-gray-300 dark:text-[#2e3347] font-medium">
-                DailyPen · 2026
-              </p>
-            </div>
-          </aside>
-
-          {/* ================= CENTER FEED AREA ================= */}
-          <section className="col-span-1 md:col-span-9 lg:col-span-7 xl:col-span-7 space-y-5">
-            
-            {/* Category and Filter Navigation Tabs */}
-            <div className="border-b border-gray-100 dark:border-white/[0.05] pb-0 flex items-center justify-between">
-              <div className="flex items-center space-x-5 overflow-x-auto scrollbar-none">
+              {/* ── Mobile menu button ── */}
+              <div className="mobile-menu-btn">
                 <button
-                  onClick={() => handleTabChange('for-you')}
-                  className={activeTab === 'for-you' ? 'feed-tab-active' : 'feed-tab'}
-                >
-                  For You
-                </button>
-                <button
-                  onClick={() => handleTabChange('following')}
-                  className={activeTab === 'following' ? 'feed-tab-active' : 'feed-tab'}
-                >
-                  Following
-                </button>
-                <button
-                  onClick={() => handleTabChange('bookmarks')}
-                  className={activeTab === 'bookmarks' ? 'feed-tab-active' : 'feed-tab'}
-                >
-                  Bookmarks
-                </button>
-                <button
-                  onClick={() => handleTabChange('featured')}
-                  className={activeTab === 'featured' ? 'feed-tab-active' : 'feed-tab'}
-                >
-                  Featured
-                </button>
-              </div>
-
-              {/* Sparkle badge */}
-              <div className="hidden sm:flex items-center space-x-1.5 text-[11px] text-amber-600 dark:text-amber-400 font-semibold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 flex-shrink-0">
-                <Sparkles className="h-3 w-3 fill-current" />
-                <span>Premium</span>
-              </div>
-            </div>
-
-            {/* Sub-Filters: Sort buttons (Only for "For You" tab when no search/tag filter is active) */}
-            {activeTab === 'for-you' && !searchQuery && !selectedTag && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {sortingFilters.map((filter) => {
-                  const Icon = filter.icon;
-                  const isActive = activeFilter === filter.id;
-                  return (
-                    <button
-                      key={filter.id}
-                      onClick={() => handleFilterChange(filter.id)}
-                      className={isActive ? 'filter-pill-active' : 'filter-pill'}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span>{filter.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Filter Indicators (Active Tag Search or Search queries) */}
-            {(searchQuery || selectedTag) && (
-              <div className="flex items-center justify-between bg-gray-50 dark:bg-[#111318] border border-gray-100 dark:border-white/[0.05] p-4 rounded-xl">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-[#f0f2f8]">
-                    {searchQuery ? `Results for "${searchQuery}"` : `Tag: #${selectedTag}`}
-                  </h3>
-                  <p className="text-xs text-gray-400 dark:text-[#555d74] mt-0.5">
-                    {displayedPosts.length} {displayedPosts.length === 1 ? 'match' : 'matches'}
-                  </p>
-                </div>
-                <button
-                  onClick={clearFilters}
-                  className="text-xs font-bold text-gray-700 dark:text-[#c8d0e0] bg-white dark:bg-[#1c1f2b] hover:bg-gray-50 dark:hover:bg-[#252836] border border-gray-200 dark:border-white/[0.06] px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
-
-            {/* Main Feed Content List */}
-            {displayedPosts.length === 0 ? (
-              activeTab === 'following' ? (
-                // Elegant empty state for Following tab
-                <div className="text-center py-16 px-6 border border-dashed border-gray-200 dark:border-white/[0.05] rounded-2xl bg-white dark:bg-[#111318] max-w-md mx-auto animate-fadeIn">
-                  <div className="w-14 h-14 bg-gray-50 dark:bg-[#1c1f2b] rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-white/[0.05]">
-                    <Users className="h-6 w-6 text-gray-300 dark:text-[#555d74]" />
-                  </div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-[#f0f2f8] mb-2">
-                    Personalize your reading experience
-                  </h3>
-                  <p className="text-sm text-gray-400 dark:text-[#555d74] mb-6 leading-relaxed">
-                    Follow writers to populate your feed with their latest stories.
-                  </p>
-                  
-                  {suggestedWriters.length > 0 && (
-                    <div className="text-left space-y-2 max-w-xs mx-auto">
-                      <p className="text-[10px] font-bold text-gray-400 dark:text-[#555d74] uppercase tracking-widest mb-2 text-center">
-                        Writers to Follow
-                      </p>
-                      {suggestedWriters.slice(0, 3).map((writer) => (
-                        <div key={writer._id} className="flex items-center justify-between bg-gray-50 dark:bg-[#1c1f2b] p-2.5 rounded-xl border border-gray-100 dark:border-white/[0.05]">
-                          <div className="flex items-center space-x-2.5 min-w-0">
-                            {writer.avatar ? (
-                              <img src={writer.avatar} alt={writer.name} className="h-7 w-7 rounded-full object-cover" />
-                            ) : (
-                              <div className="h-7 w-7 rounded-full bg-gray-800 dark:bg-[#252836] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                                {writer.name.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-xs font-semibold text-gray-900 dark:text-[#c8d0e0] truncate">{writer.name}</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleFollowToggle(writer._id)}
-                            className="text-[10px] font-bold text-gray-700 dark:text-[#c8d0e0] px-2.5 py-1 bg-white dark:bg-[#252836] hover:bg-gray-50 dark:hover:bg-[#2e3347] border border-gray-200 dark:border-white/[0.06] rounded-full transition-colors"
-                          >
-                            Follow
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                // General empty state
-                <div className="text-center py-20 bg-gray-50 dark:bg-[#111318] border border-dashed border-gray-100 dark:border-white/[0.05] rounded-2xl">
-                  <BookOpen className="h-9 w-9 text-gray-300 dark:text-[#2e3347] mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-gray-900 dark:text-[#f0f2f8] mb-1.5">
-                    No articles found
-                  </h3>
-                  <p className="text-sm text-gray-400 dark:text-[#555d74] max-w-xs mx-auto">
-                    {searchQuery 
-                      ? 'No results matched your search terms.' 
-                      : 'Be the first writer to publish an article on DailyPen!'}
-                  </p>
-                  {(searchQuery || selectedTag) && (
-                    <button
-                      onClick={clearFilters}
-                      className="mt-5 text-xs font-semibold text-gray-700 dark:text-[#c8d0e0] px-4 py-2 bg-white dark:bg-[#1c1f2b] border border-gray-200 dark:border-white/[0.06] rounded-lg hover:bg-gray-50 dark:hover:bg-[#252836] transition-colors"
-                    >
-                      Browse all posts
-                    </button>
-                  )}
-                </div>
-              )
-            ) : (
-              <div className="space-y-4">
-                {displayedPosts.map((post) => (
-                  <PostCard
-                    key={post._id}
-                    post={post}
-                    onLike={handleLike}
-                    onSave={handleSave}
-                    isLiked={post.likes?.includes(user?._id)}
-                    isSaved={savedPosts.includes(post._id)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Load More Button */}
-            {activeTab === 'for-you' && !searchQuery && !selectedTag && hasMore && (
-              <div className="mt-6 flex justify-center">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="flex items-center space-x-2
-                             border border-gray-200 dark:border-white/[0.08]
-                             bg-white dark:bg-[#161820]
-                             hover:bg-gray-50 dark:hover:bg-[#1c1f2b]
-                             text-gray-700 dark:text-[#c8d0e0]
-                             px-6 py-2.5 rounded-full font-medium
-                             transition-all duration-200
-                             disabled:opacity-40 disabled:cursor-not-allowed
-                             shadow-sm text-xs"
-                >
-                  {loadingMore ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
-                      <span>Loading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Load more stories</span>
-                      <span className="text-gray-300 dark:text-[#2e3347] text-[10px]">
-                        ({currentPage}/{totalPages})
-                      </span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* ================= NEWSLETTER CARD ================= */}
-            <div className="mt-10 bg-gray-50 dark:bg-[#111318] border border-gray-100 dark:border-white/[0.05] rounded-2xl p-6 sm:p-8 relative overflow-hidden">
-              {/* Decorative glow */}
-              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-400/10 dark:bg-amber-400/5 rounded-full blur-2xl pointer-events-none" />
-              
-              <div className="relative max-w-xl">
-                <div className="inline-flex items-center justify-center p-2 bg-amber-500 text-white rounded-xl mb-4 shadow-sm">
-                  <Mail className="h-4.5 w-4.5" />
-                </div>
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-[#f0f2f8] leading-snug mb-2">
-                  Never miss a story from DailyPen
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-400 dark:text-[#555d74] mb-5 leading-relaxed">
-                  Join our curated reading community — get the week's best stories and writing tips delivered to your inbox.
-                </p>
-
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const email = e.target.email.value;
-                    if (email) {
-                      toast.success('Thank you for subscribing to DailyPen!');
-                      e.target.reset();
-                    }
+                  id="mobile-menu-open"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="Open menu"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 12px 6px 8px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--dp-border)',
+                    background: 'transparent',
+                    color: 'var(--dp-subtle)',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                    marginBottom: '20px',
+                    transition: 'all 0.18s ease',
                   }}
-                  className="flex flex-col sm:flex-row gap-2 max-w-md"
+                  onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = 'var(--dp-s1)';
+                    e.currentTarget.style.color = 'var(--dp-body)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--dp-subtle)';
+                  }}
                 >
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="your@email.com"
-                    required
-                    className="dp-input flex-1"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full sm:w-auto px-5 py-2.5
-                               bg-amber-500 hover:bg-amber-400
-                               text-white font-semibold text-sm
-                               rounded-xl transition-colors shadow-sm whitespace-nowrap"
-                  >
-                    Subscribe
-                  </button>
-                </form>
+                  <Menu style={{ width: '16px', height: '16px' }} />
+                  <span>{feedTitle}</span>
+                </button>
               </div>
-            </div>
 
-          </section>
-
-          {/* ================= RIGHT SIDEBAR WIDGETS ================= */}
-          <aside className="hidden lg:flex lg:col-span-3 xl:col-span-3 flex-col space-y-5 sticky top-24 self-start">
-            
-            {/* Suggested Writers Widget */}
-            {suggestedWriters.length > 0 && (
-              <div className="widget-card">
-                <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#4b5063] uppercase tracking-widest mb-4">
-                  Suggested Writers
-                </h3>
-                <div className="space-y-4">
-                  {suggestedWriters.slice(0, 4).map((writer) => {
-                    const isFollowing = followedWriters.includes(writer._id);
-                    return (
-                      <div key={writer._id} className="flex items-center justify-between min-w-0">
-                        <Link 
-                          to={`/profile/${writer._id}`} 
-                          className="flex items-center space-x-2.5 min-w-0 group"
-                        >
-                          {writer.avatar ? (
-                            <img 
-                              src={writer.avatar} 
-                              alt={writer.name} 
-                              className="h-8 w-8 rounded-full object-cover border border-gray-100 dark:border-white/[0.07] group-hover:scale-105 transition-transform duration-200" 
-                            />
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-gray-800 dark:bg-[#1c1f2b] flex items-center justify-center text-white font-bold text-xs flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
-                              {writer.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <h4 className="text-xs font-semibold text-gray-800 dark:text-[#c8d0e0] truncate group-hover:text-gray-900 dark:group-hover:text-[#f0f2f8] transition-colors">
-                              {writer.name}
-                            </h4>
-                            <p className="text-[10px] text-gray-400 dark:text-[#4b5063] truncate max-w-[110px] mt-0.5">
-                              {writer.bio || 'Author on DailyPen'}
-                            </p>
-                          </div>
-                        </Link>
-                        
-                        <button
-                          onClick={() => handleFollowToggle(writer._id)}
-                          className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all duration-200 border flex-shrink-0 ${
-                            isFollowing
-                              ? 'text-gray-400 dark:text-[#555d74] border-gray-200 dark:border-white/[0.08] hover:text-red-400 hover:border-red-300 dark:hover:border-red-500/30'
-                              : 'text-gray-700 dark:text-[#c8d0e0] bg-white dark:bg-[#1c1f2b] border-gray-200 dark:border-white/[0.08] hover:bg-gray-50 dark:hover:bg-[#252836]'
-                          }`}
-                        >
-                          {isFollowing ? 'Following' : 'Follow'}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Trending Tags Widget */}
-            {topTags.length > 0 && (
-              <div className="widget-card">
-                <div className="flex items-center justify-between mb-3.5">
-                  <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#4b5063] uppercase tracking-widest">
-                    Trending Tags
-                  </h3>
-                  {selectedTag && (
-                    <button 
-                      onClick={clearFilters}
-                      className="text-[10px] text-gray-400 dark:text-[#555d74] hover:text-gray-700 dark:hover:text-[#8891a8] transition-colors"
-                    >
-                      View All
-                    </button>
+              {/* ── Feed Context Header ── */}
+              <div className="feed-context-header">
+                <div>
+                  <h1 className="feed-context-title">{feedTitle}</h1>
+                  {user && !searchQuery && !selectedTag && activeTab === 'for-you' && (
+                    <p className="feed-context-sub">
+                      {getGreeting()},{' '}
+                      <span style={{ color: 'var(--dp-accent)', fontWeight: 600 }}>
+                        {user.name.split(' ')[0]}
+                      </span>
+                    </p>
+                  )}
+                  {feedSub && (
+                    <p className="feed-context-sub">{feedSub}</p>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {topTags.map((tag) => {
-                    const isSelected = selectedTag === tag;
-                    return (
-                      <button
-                        key={tag}
-                        onClick={() => handleTagClick(tag)}
-                        className={isSelected ? 'tag-pill-active' : 'tag-pill'}
-                      >
-                        #{tag}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
-            )}
 
-            {/* Popular Reads Widget */}
-            {featuredPosts.length > 0 && (
-              <div className="widget-card">
-                <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#4b5063] uppercase tracking-widest mb-4">
-                  Popular Reads
-                </h3>
-                <div className="space-y-4">
-                  {featuredPosts.slice(0, 3).map((post, idx) => (
-                    <div key={post._id} className="flex space-x-3 items-start min-w-0">
-                      <span className="text-xl font-black font-sans text-gray-200 dark:text-[#252836] leading-none flex-shrink-0 w-5 pt-0.5">
-                        {idx + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <Link 
-                          to={`/profile/${post.author?._id}`}
-                          className="text-[10px] font-semibold text-gray-400 dark:text-[#555d74] hover:text-gray-700 dark:hover:text-[#8891a8] truncate block transition-colors"
-                        >
-                          {post.author?.name}
-                        </Link>
-                        <Link 
-                          to={`/post/${post._id}`}
-                          className="text-xs font-semibold text-gray-800 dark:text-[#c8d0e0] leading-snug hover:text-gray-600 dark:hover:text-[#f0f2f8] transition-colors duration-150 mt-0.5 block line-clamp-2"
-                        >
-                          {post.title}
-                        </Link>
-                      </div>
-                    </div>
+              {/* ── Sort Filter Pills ── */}
+              {activeTab === 'for-you' && !searchQuery && !selectedTag && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px', paddingTop: '16px' }}>
+                  {sortingFilters.map(({ id, label, icon: Icon }) => (
+                    <button
+                      key={id}
+                      id={`filter-${id}`}
+                      onClick={() => handleFilterChange(id)}
+                      className={activeFilter === id ? 'filter-pill-active' : 'filter-pill'}
+                    >
+                      <Icon style={{ width: '11px', height: '11px' }} />
+                      <span>{label}</span>
+                    </button>
                   ))}
                 </div>
+              )}
+
+              {/* ── Active filter indicator ── */}
+              {(searchQuery || selectedTag) && (
+                <div className="dp-filter-bar" style={{ marginBottom: '8px', marginTop: '8px' }}>
+                  <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--dp-heading)' }}>
+                    {displayedPosts.length} {displayedPosts.length === 1 ? 'result' : 'results'} for{' '}
+                    <span style={{ color: 'var(--dp-accent)' }}>
+                      {searchQuery ? `"${searchQuery}"` : `#${selectedTag}`}
+                    </span>
+                  </p>
+                  <button
+                    onClick={clearFilters}
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      color: 'var(--dp-subtle)',
+                      padding: '4px 12px',
+                      borderRadius: '9999px',
+                      backgroundColor: 'var(--dp-s2)',
+                      border: '1px solid var(--dp-border)',
+                      cursor: 'pointer',
+                      transition: 'all 0.18s ease',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--dp-s3)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--dp-s2)'}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
+              {/* ── FEED CONTENT ── */}
+              {loading && posts.length > 0 ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '56px 0' }}>
+                  <Loader2 className="animate-spin" style={{ width: '24px', height: '24px', color: 'var(--dp-accent)' }} />
+                </div>
+              ) : displayedPosts.length === 0 ? (
+                activeTab === 'following' ? (
+                  /* Following empty state */
+                  <div className="dp-empty" style={{ maxWidth: '420px', margin: '32px auto 0' }}>
+                    <div style={{ width: '52px', height: '52px', borderRadius: '50%', backgroundColor: 'var(--dp-s2)', border: '1px solid var(--dp-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                      <Users style={{ width: '22px', height: '22px', color: 'var(--dp-muted)' }} />
+                    </div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--dp-heading)', marginBottom: '8px' }}>
+                      Personalize your reading
+                    </h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--dp-subtle)', lineHeight: 1.6, marginBottom: '24px' }}>
+                      Follow writers you love to build your own curated feed.
+                    </p>
+                    {suggestedWriters.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '300px', margin: '0 auto' }}>
+                        <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--dp-muted)', textAlign: 'center', marginBottom: '4px' }}>
+                          Writers to follow
+                        </p>
+                        {suggestedWriters.slice(0, 3).map(writer => (
+                          <div key={writer._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '14px', backgroundColor: 'var(--dp-s2)', border: '1px solid var(--dp-border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                              {writer.avatar ? (
+                                <img src={writer.avatar} alt={writer.name} style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: avatarGrad(writer.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '0.75rem', flexShrink: 0 }}>
+                                  {writer.name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--dp-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {writer.name}
+                              </p>
+                            </div>
+                            <button onClick={() => handleFollowToggle(writer._id)} className={followedWriters.includes(writer._id) ? 'dp-follow-btn-active' : 'dp-follow-btn'}>
+                              {followedWriters.includes(writer._id) ? 'Following' : 'Follow'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* General empty state */
+                  <div className="dp-empty" style={{ marginTop: '32px' }}>
+                    <BookOpen style={{ width: '36px', height: '36px', color: 'var(--dp-s3)', margin: '0 auto 12px' }} />
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--dp-heading)', marginBottom: '6px' }}>
+                      No articles found
+                    </h3>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--dp-subtle)', maxWidth: '280px', margin: '0 auto' }}>
+                      {searchQuery ? 'No results matched your search.' : 'Be the first to publish on DailyPen!'}
+                    </p>
+                    {(searchQuery || selectedTag) && (
+                      <button
+                        onClick={clearFilters}
+                        style={{ marginTop: '20px', fontSize: '0.8rem', fontWeight: 600, padding: '8px 20px', borderRadius: '12px', backgroundColor: 'var(--dp-s2)', border: '1px solid var(--dp-border)', color: 'var(--dp-body)', cursor: 'pointer' }}
+                      >
+                        Browse all posts
+                      </button>
+                    )}
+                  </div>
+                )
+              ) : (
+                /* Post list — reading-flow feed */
+                <div style={{ paddingTop: '8px' }}>
+                  {displayedPosts.map(post => (
+                    <PostCard
+                      key={post._id}
+                      post={post}
+                      onLike={handleLike}
+                      onSave={handleSave}
+                      isLiked={post.likes?.includes(user?._id)}
+                      isSaved={savedPosts.includes(post._id)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* ── Load More ── */}
+              {activeTab === 'for-you' && !searchQuery && !selectedTag && hasMore && (
+                <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    id="load-more-btn"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="dp-load-more"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 className="animate-spin" style={{ width: '14px', height: '14px', color: 'var(--dp-accent)' }} />
+                        <span>Loading…</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Load more stories</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--dp-muted)' }}>
+                          ({currentPage}/{totalPages})
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* ── Newsletter Card ── */}
+              <div className="dp-newsletter-card">
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '-40px',
+                    right: '-40px',
+                    width: '140px',
+                    height: '140px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, var(--dp-accent-glow), transparent)',
+                    filter: 'blur(32px)',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <div style={{ position: 'relative' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '10px', borderRadius: '12px', background: 'linear-gradient(135deg,var(--dp-accent),#f07b38)', marginBottom: '14px' }}>
+                    <Mail style={{ width: '16px', height: '16px', color: '#fff' }} />
+                  </div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--dp-heading)', marginBottom: '6px' }}>
+                    Never miss a great story
+                  </h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--dp-subtle)', marginBottom: '20px', lineHeight: 1.6 }}>
+                    The week's best stories and writing tips — delivered to your inbox.
+                  </p>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const email = e.target.email.value;
+                      if (email) { toast.success('Thank you for subscribing!'); e.target.reset(); }
+                    }}
+                    style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '420px' }}
+                  >
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="your@email.com"
+                        required
+                        className="dp-input"
+                        style={{ flex: 1, minWidth: '180px' }}
+                      />
+                      <button
+                        type="submit"
+                        className="dp-write-btn"
+                        style={{ borderRadius: '10px', whiteSpace: 'nowrap' }}
+                      >
+                        Subscribe
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            )}
 
-            {/* Footer note */}
-            <div className="px-1 text-[10px] text-gray-300 dark:text-[#2e3347] font-medium">
-              <p className="flex items-center space-x-1.5">
-                <span>DailyPen</span>
-                <span>·</span>
-                <span>© 2026</span>
-              </p>
-            </div>
+              {/* Footer on desktop */}
+              <div className="hidden-mobile" style={{ marginTop: '48px' }}>
+                <Footer />
+              </div>
 
-          </aside>
+            </main>
 
+            {/* ═══════════════════════════════════
+                RIGHT SIDEBAR
+                position:sticky + align-self:start
+                = THE correct sticky pattern
+                ═══════════════════════════════════ */}
+            <RightSidebar
+              suggestedWriters={suggestedWriters}
+              topTags={topTags}
+              featuredPosts={featuredPosts}
+              selectedTag={selectedTag}
+              followedWriters={followedWriters}
+              onFollowToggle={handleFollowToggle}
+              onTagClick={handleTagClick}
+              onClearFilters={clearFilters}
+            />
+
+          </div>
         </div>
-      </main>
+      </div>
 
-      {/* ================= MOBILE BOTTOM STICKY NAVIGATION BAR ================= */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/97 dark:bg-[#0c0e14]/97 border-t border-gray-100 dark:border-white/[0.05] backdrop-blur-md z-40 px-6 py-3 flex items-center justify-between shadow-lg dark:shadow-black/50 transition-colors duration-300">
-        <button 
-          onClick={() => handleTabChange('for-you')}
-          className={`flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 ${
-            activeTab === 'for-you' && !selectedTag && !searchQuery
-              ? 'text-gray-900 dark:text-amber-400 scale-105'
-              : 'text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8]'
-          }`}
-        >
-          <Home className="h-5 w-5" />
-          <span className="text-[9px] font-semibold">Home</span>
-        </button>
-
-        <button 
-          onClick={() => handleTabChange('bookmarks')}
-          className={`flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 ${
-            activeTab === 'bookmarks'
-              ? 'text-gray-900 dark:text-amber-400 scale-105'
-              : 'text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8]'
-          }`}
-        >
-          <Bookmark className="h-5 w-5" />
-          <span className="text-[9px] font-semibold">Saved</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('following')}
-          className={`flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 ${
-            activeTab === 'following'
-              ? 'text-gray-900 dark:text-amber-400 scale-105'
-              : 'text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8]'
-          }`}
-        >
-          <Users className="h-5 w-5" />
-          <span className="text-[9px] font-semibold">Following</span>
-        </button>
-
-        <Link 
+      {/* ── MOBILE BOTTOM NAVIGATION ── */}
+      <nav
+        className="mobile-bottom-nav"
+        style={{
+          backgroundColor: 'var(--dp-bg)',
+          borderTop: '1px solid var(--dp-border)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
+        }}
+      >
+        {[
+          { id: 'for-you',   icon: Home,    label: 'Home',      action: () => handleTabChange('for-you') },
+          { id: 'following', icon: Users,   label: 'Following', action: () => handleTabChange('following') },
+          { id: 'featured',  icon: Star,    label: 'Featured',  action: () => handleTabChange('featured') },
+          { id: 'bookmarks', icon: Bookmark,label: 'Saved',     action: () => handleTabChange('bookmarks') },
+        ].map(({ id, icon: Icon, label, action }) => {
+          const active = activeTab === id && !selectedTag && !searchQuery;
+          return (
+            <button
+              key={id}
+              id={`mobile-nav-${id}`}
+              onClick={action}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '2px',
+                padding: '4px 8px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: active ? 'var(--dp-accent)' : 'var(--dp-muted)',
+                transform: active ? 'scale(1.08)' : 'scale(1)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <Icon style={{ width: '20px', height: '20px' }} />
+              <span style={{ fontSize: '9px', fontWeight: 600 }}>{label}</span>
+            </button>
+          );
+        })}
+        <Link
           to="/create-post"
-          className="flex flex-col items-center justify-center space-y-0.5 text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8] transition-colors duration-200"
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '4px 8px', color: 'var(--dp-muted)', textDecoration: 'none' }}
         >
-          <PenSquare className="h-5 w-5" />
-          <span className="text-[9px] font-semibold">Write</span>
+          <PenSquare style={{ width: '20px', height: '20px' }} />
+          <span style={{ fontSize: '9px', fontWeight: 600 }}>Write</span>
         </Link>
-
-        {user && (
-          <Link 
-            to={`/profile/${user._id}`}
-            className="flex flex-col items-center justify-center space-y-0.5 text-gray-400 dark:text-[#4b5063] hover:text-gray-600 dark:hover:text-[#8891a8] transition-colors duration-200"
-          >
-            <User className="h-5 w-5" />
-            <span className="text-[9px] font-semibold">Profile</span>
-          </Link>
-        )}
       </nav>
 
-      {/* Spacing element at bottom to avoid bottom nav overlay */}
-      <div className="md:hidden h-16"></div>
+      {/* Mobile spacer */}
+      <div className="mobile-nav-spacer" />
 
-      <div className="hidden md:block">
-        <Footer />
-      </div>
     </div>
   );
 };

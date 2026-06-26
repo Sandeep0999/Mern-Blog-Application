@@ -48,8 +48,46 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'moderator', 'content_reviewer', 'support_admin', 'admin'],
       default: 'user',
+    },
+
+    // ── Moderation / Account Status ─────────────────────────
+    status: {
+      type: String,
+      enum: ['active', 'shadow_banned', 'suspended', 'banned'],
+      default: 'active',
+      index: true,
+    },
+    isShadowBanned: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    suspendedUntil: {
+      type: Date,
+      default: null,
+    },
+
+    // ── Strike & Warning System ──────────────────────────────
+    strikes: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    warnings: [
+      {
+        message: { type: String, required: true },
+        issuedAt: { type: Date, default: Date.now },
+        issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      },
+    ],
+
+    // ── Report Tracking ──────────────────────────────────────
+    reportCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     bio: {
       type: String,

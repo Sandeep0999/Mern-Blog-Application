@@ -51,6 +51,29 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    // ── Moderation Fields ─────────────────────────────────
+    status: {
+      type: String,
+      enum: ['published', 'unpublished', 'removed', 'flagged'],
+      default: 'published',
+      index: true,
+    },
+    reportCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    autoFlagged: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    moderationNote: {
+      type: String,
+      maxlength: [500, 'Moderation note cannot exceed 500 characters'],
+      trim: true,
+    },
   },
   {
     timestamps: true,
