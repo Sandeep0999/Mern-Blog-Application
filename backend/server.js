@@ -56,8 +56,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS configuration accepting comma-separated production origins or developer fallbacks
-const allowedOrigins = process.env.CLIENT_URL 
-  ? process.env.CLIENT_URL.split(',') 
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',')
   : ['http://localhost:5173', 'http://localhost:5174'];
 
 app.use(
@@ -84,7 +84,7 @@ app.get('/api/health', (req, res) => {
     2: 'connecting',
     3: 'disconnecting',
   };
-  
+
   if (dbState === 1) {
     res.json({ status: 'ok', database: states[dbState] });
   } else {
