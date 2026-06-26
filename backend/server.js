@@ -56,13 +56,25 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS configuration accepting comma-separated production origins or developer fallbacks
-const allowedOrigins = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(',')
+const allowedOrigins = process.env.CLIENT_URL 
+  ? process.env.CLIENT_URL.split(',').map(origin => origin.trim()) 
   : ['http://localhost:5173', 'http://localhost:5174'];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      
+      const isAllowed = allowedOrigins.includes(origin) || 
+        origin.endsWith('.vercel.app') || 
+        /^http:\/\/localhost:\d+$/.test(origin);
+        
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
