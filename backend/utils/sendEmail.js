@@ -1,44 +1,33 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 /**
- * Send an email via Gmail using an App Password.
+ * Send an email via Resend API (HTTPS-based, works on Render free tier).
+ * Resend free plan: 3,000 emails/month, 100/day.
  *
- * Gmail App Passwords are 16-character strings that Google displays
- * with spaces (e.g. "htic afzf qtki gegk") — spaces must be STRIPPED
- * before use. We also create the transporter lazily so that process.env
- * is fully loaded when this function is first called.
+ * Set RESEND_API_KEY in your .env and Render environment variables.
+ * From address: use "onboarding@resend.dev" until you verify a domain.
  */
 const sendEmail = async ({ to, subject, html }) => {
-  // Strip spaces from the App Password (Google shows them grouped for readability)
-  const appPassword = (process.env.EMAIL_PASS || '').replace(/\s+/g, '');
+  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!process.env.EMAIL_USER || !appPassword) {
-    console.error('[sendEmail] EMAIL_USER or EMAIL_PASS is not set in .env');
-    // Silently skip sending in dev if credentials are missing, so the app doesn't crash
+  if (!apiKey) {
+    console.error('[sendEmail] RESEND_API_KEY is not set in environment');
     if (process.env.NODE_ENV === 'development') return;
     throw new Error('Email credentials are not configured.');
   }
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use STARTTLS on port 587
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: appPassword,
-    },
-    tls: {
-      rejectUnauthorized: false, // Prevent TLS handshake blocking
-    },
-    connectionTimeout: 10000, // 10s connection timeout
-  });
+  const resend = new Resend(apiKey);
 
-  await transporter.sendMail({
-    from: `"DailyPen Security" <${process.env.EMAIL_USER}>`,
+  const { error } = await resend.emails.send({
+    from: 'DailyPen <onboarding@resend.dev>',
     to,
     subject,
     html,
   });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 };
 
 export default sendEmail;
